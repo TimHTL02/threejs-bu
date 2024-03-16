@@ -1,42 +1,32 @@
 import { motion, useAnimate } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useTransitionStore } from "./utils/zustand/useTransitionStore";
 import { useNavigate } from "react-router-dom";
+import { GiDeathSkull } from "react-icons/gi";
 
 
 
 export function Transition(){
 
     const [slideScope, slideAnimate] = useAnimate();
-    const [windowWidth, setWindowWidth] = useState<number>(0);
 
     const {fade, navigate} = useTransitionStore();
 
     const navigateFunction = useNavigate();
 
     async function SlideCover(){
-        slideScope.current.style.display = 'block';
-        await slideAnimate(slideScope.current, {x: 0}, {ease: 'easeInOut'});
+        slideScope.current.style.display = 'flex';
+        await slideAnimate(slideScope.current, {x: -window.innerWidth}, {duration: 0});
+        await slideAnimate(slideScope.current, {x: 0}, {ease: 'easeInOut', duration: 1});
         if (navigate !== '')
             navigateFunction(navigate);
     }
 
     async function SlideOut(){
-        await slideAnimate(slideScope.current, {x: -windowWidth});
+        slideScope.current.style.display = 'flex';
+        await slideAnimate(slideScope.current, {x: window.innerWidth}, {ease: 'easeInOut', duration: 1});
         slideScope.current.style.display = 'none';
     }
-
-    useEffect(() =>{
-        const onresize = () =>{
-            setWindowWidth(window.innerWidth);
-        }
-        window.addEventListener('resize', onresize);
-        onresize();
-
-        return () =>{
-            window.removeEventListener('resize', onresize);
-        }
-    }, [])
 
     useEffect(() =>{
         if (!slideScope.current)
@@ -50,10 +40,13 @@ export function Transition(){
     }, [slideScope.current, fade])
 
     return (
-        <motion.div ref={slideScope} className=" z-50 absolute w-full h-full bg-[#9cbada] select-none"
+        <motion.div ref={slideScope} className=" z-50 absolute text-white w-full h-full bg-[#9cbada] select-none justify-center items-center"
+            style={{
+                display: 'none'
+            }}
             initial={{x: -window.innerWidth}}
         >
-            
+            <GiDeathSkull className=" text-9xl" />
         </motion.div> 
     )
 }
