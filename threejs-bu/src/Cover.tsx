@@ -3,10 +3,10 @@ import { AnimatedTooltip } from "./ui/animated-tooltip";
 import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { supabase } from ".";
-import { useEffect, useState } from "react";
-import { Session } from "@supabase/supabase-js";
+import { useEffect } from "react";
 import { useAccountStore } from "./utils/zustand/useAccountStore";
 import { motion } from "framer-motion";
+import { useTransitionStore } from "./utils/zustand/useTransitionStore";
 
 const people = [
   {
@@ -28,6 +28,7 @@ const people = [
 export function Cover() {
 
   const {setAccount, account} = useAccountStore();
+  const {setFading} = useTransitionStore();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -84,7 +85,7 @@ export function Cover() {
   }, []);
 
   return (
-    <div className=" relative h-full w-full bg-[#8FB1D6] flex flex-col items-center justify-start overflow-hidden">
+    <div className=" relative h-full w-full bg-[#8FB1D6] flex flex-col items-center justify-start p-1">
       
       <p className=" mb-5 pl-5 text-white font-mono text-xl">made by</p>
 
@@ -92,7 +93,7 @@ export function Cover() {
         <AnimatedTooltip items={people} />
       </div>
 
-      <h1 className="md:text-7xl text-3xl lg:text-9xl font-bold text-center text-white relative z-20 select-none">
+      <h1 className="md:text-7xl text-3xl lg:text-7xl font-bold text-center text-white relative z-20 select-none">
         Untitled Game
       </h1>
       <div className="w-[40rem] h-40 relative">
@@ -122,10 +123,12 @@ export function Cover() {
               supabaseClient={supabase}
               appearance={{ theme: ThemeSupa }}
               providers={["google"]}
+              redirectTo={window.location.origin}
             /> :
-            <div className=" flex flex-col justify-center items-center gap-10">
+            <div className=" flex flex-col justify-center items-center">
+              <p className=" mb-5 text-white">{`Welcome, ${account.username}!`}</p>
               <motion.div
-                className=" text-2xl font-semibold p-1 pl-2 pr-2 border-2 border-white rounded-md select-none text-white cursor-pointer"
+                className=" mb-5 text-2xl font-semibold p-1 pl-2 pr-2 border-2 border-white rounded-md select-none text-white cursor-pointer"
                 initial={{ scale: 1, color: "#ffffff" }}
                 whileHover={{ scale: 1.5, color: "#000000" }}
                 transition={{
@@ -134,10 +137,10 @@ export function Cover() {
                 }}
                 whileTap={{ scale: 0.8, rotateZ: 0 }}
                 onClick={() =>{
-
+                  setFading(true, '/game');
                 }}
               >
-                <p>{`Welcome, ${account.username}!`}</p>
+                <p>Play</p>
               </motion.div>
               <motion.div
                 className=" text-2xl font-semibold p-1 pl-2 pr-2 border-2 border-white rounded-md select-none text-white cursor-pointer"

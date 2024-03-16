@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 
-export type Account = {
+type Account = {
     user_id: string;
     username: string;
     email: string;
