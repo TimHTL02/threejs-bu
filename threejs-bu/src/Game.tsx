@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { useEffect, useRef, useState } from 'react';
 import { useTransitionStore } from './utils/zustand/useTransitionStore';
+import { motion } from 'framer-motion';
 
 
 export function Game(){
@@ -19,6 +20,7 @@ export function Game(){
         renderer.current!.render( scene.current!, camera.current! );
     }
 
+    // init
     const counted = useRef<boolean>(false);
     const hasInitialized = useRef<boolean>(false);
     useEffect(() =>{
@@ -45,6 +47,7 @@ export function Game(){
         hasInitialized.current = true;
     }, [container.current])
 
+    // resize window
     useEffect(() =>{
         if (!hasInitialized.current)
             return;
@@ -65,6 +68,14 @@ export function Game(){
         }
     }, [hasInitialized.current])
 
+    // GC
+    function Exit(){
+        camera.current!.remove();
+        scene.current!.remove();
+        renderer.current!.dispose();
+    }
+
+    // add script here
     useEffect(() =>{
         if (!hasInitialized.current)
             return;
@@ -74,12 +85,31 @@ export function Game(){
         const plane = new THREE.Mesh( geometry, material );
         plane.rotateX(90);
         scene.current!.add( plane );
-
     }, [hasInitialized.current])
 
     return (
-        <div ref={container} className=" w-full h-full">
+        <div className=' relative w-full h-full'>
+            <div className=' absolute z-40 w-full h-full p-2 flex justify-start items-start'>
+                <motion.div
+                    className=" mb-5 text-2xl font-semibold p-1 pl-2 pr-2 border-2 border-white rounded-md select-none text-white cursor-pointer"
+                    initial={{ scale: 1, color: "#ffffff" }}
+                    whileHover={{ scale: 1.5, color: "#000000" }}
+                    transition={{
+                    type: "spring",
+                    bounce: 0.6,
+                    }}
+                    whileTap={{ scale: 0.8, rotateZ: 0 }}
+                    onClick={() =>{
+                        Exit();
+                        setFading(true, '/');
+                    }}
+                >
+                    <p className=' text-sm'>Back</p>
+                </motion.div>   
+            </div>
+            <div ref={container} className=" absolute z-0 w-full h-full">
 
+            </div>
         </div>
     )
 }

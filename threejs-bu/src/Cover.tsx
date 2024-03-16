@@ -81,6 +81,7 @@ export function Cover() {
       }
     });
 
+    setFading(false, '');
     return () => subscription.unsubscribe();
   }, []);
 
