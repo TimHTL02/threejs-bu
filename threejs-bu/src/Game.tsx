@@ -110,34 +110,40 @@ export function Game(){
                         if (!entity.gameObject.model)
                             break;
 
-                        component.x = lerp(component.x, component.new_x, component.time_position);
-                        component.y = lerp(component.y, component.new_y, component.time_position);
-                        component.z = lerp(component.z, component.new_z, component.time_position);
-                        component.rotate_x = lerp(component.rotate_x, component.new_rotate_x, component.time_rotation);
-                        component.rotate_y = lerp(component.rotate_y, component.new_rotate_y, component.time_rotation);
-                        component.rotate_z = lerp(component.rotate_z, component.new_rotate_z, component.time_rotation);
-                        component.scale = {
-                            x: lerp(component.scale.x, component.new_scale.x, component.time_scale),
-                            y: lerp(component.scale.y, component.new_scale.y, component.time_scale),
-                            z: lerp(component.scale.z, component.new_scale.z, component.time_scale)
+                        if (component.time_position < 1){
+                            component.x = lerp(component.x, component.new_x, component.time_position);
+                            component.y = lerp(component.y, component.new_y, component.time_position);
+                            component.z = lerp(component.z, component.new_z, component.time_position);
+                            component.time_position += 0.1;
+                            if (component.time_position > 1)
+                                component.time_position = 1;
+                            entity.gameObject.model.translateX(component.new_x - component.x);
+                            entity.gameObject.model.translateY(component.new_y - component.y);
+                            entity.gameObject.model.translateZ(component.new_z - component.z);
                         }
-                        component.time_position += 0.1;
-                        component.time_rotation += 0.1;
-                        component.time_scale += 0.1;
-                        if (component.time_position > 1)
-                            component.time_position = 1;
-                        if (component.time_rotation > 1)
-                            component.time_rotation = 1;
-                        if (component.time_scale > 1)
-                            component.time_scale = 1;
+                        if (component.time_rotation < 1){
+                            component.rotate_x = lerp(component.rotate_x, component.new_rotate_x, component.time_rotation);
+                            component.rotate_y = lerp(component.rotate_y, component.new_rotate_y, component.time_rotation);
+                            component.rotate_z = lerp(component.rotate_z, component.new_rotate_z, component.time_rotation);
+                            component.time_rotation += 0.1;
+                            if (component.time_rotation > 1)
+                                component.time_rotation = 1;
+                            entity.gameObject.model.rotateX(component.new_rotate_x - component.rotate_x);
+                            entity.gameObject.model.rotateY(component.new_rotate_y - component.rotate_y);
+                            entity.gameObject.model.rotateZ(component.new_rotate_z - component.rotate_z);
+                        }
+                        if (component.time_scale < 1){
+                            component.scale = {
+                                x: lerp(component.scale.x, component.new_scale.x, component.time_scale),
+                                y: lerp(component.scale.y, component.new_scale.y, component.time_scale),
+                                z: lerp(component.scale.z, component.new_scale.z, component.time_scale)
+                            }
+                            component.time_scale += 0.1;
+                            if (component.time_scale > 1)
+                                component.time_scale = 1;
+                            entity.gameObject.model.scale.set(component.scale.x, component.scale.y, component.scale.z);
+                        }
 
-                        entity.gameObject.model.translateX(component.new_x - component.x);
-                        entity.gameObject.model.translateY(component.new_y - component.y);
-                        entity.gameObject.model.translateZ(component.new_z - component.z);
-                        entity.gameObject.model.rotateX(component.new_rotate_x - component.rotate_x);
-                        entity.gameObject.model.rotateY(component.new_rotate_y - component.rotate_y);
-                        entity.gameObject.model.rotateZ(component.new_rotate_z - component.rotate_z);
-                        entity.gameObject.model.scale.set(component.scale.x, component.scale.y, component.scale.z);
                         break;
                     }
                 }
