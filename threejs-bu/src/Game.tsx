@@ -3,6 +3,7 @@ import * as CANNON from 'cannon-es'
 import { useEffect, useRef, useState } from 'react';
 import { useTransitionStore } from './utils/zustand/useTransitionStore';
 import { motion } from 'framer-motion';
+import { useAccountStore } from './utils/zustand/useAccountStore';
 
 type GameObject = {
     [key: string]: any
@@ -28,11 +29,11 @@ function createEntity(id: string){
 function insertComponent(entity: Entity, component: Component){
     entity.components[component.id] = component;
 }
-function insertEntityToSystem(entity: Entity, system: Record<string, Entity>, scene: THREE.Scene, world: CANNON.World){
-    initializeEntity(entity, scene, world);
+function insertEntityToSystem(entity: Entity, system: Record<string, Entity>, scene: THREE.Scene, world: CANNON.World, ui: HTMLDivElement){
+    initializeEntity(entity, scene, world, ui);
     system[entity.id] = entity;
 }
-function initializeEntity(entity: Entity, scene: THREE.Scene, world: CANNON.World){
+function initializeEntity(entity: Entity, scene: THREE.Scene, world: CANNON.World, ui: HTMLDivElement){
     let transform = entity.components['transform'];
     let _scale = {x: 1, y: 1, z: 1};
     if (transform.scale){
@@ -53,7 +54,7 @@ function initializeEntity(entity: Entity, scene: THREE.Scene, world: CANNON.Worl
                 entity.gameObject.model = new THREE.Mesh( new THREE.BoxGeometry( component.width, component.height, component.depth ), new THREE.MeshBasicMaterial( {color: component.color} ) );
                 const box = new CANNON.Body({mass: 0})
                 box.fixedRotation = true;
-                box.addShape(new CANNON.Box(new CANNON.Vec3(component.width * _scale.x, component.height * _scale.y, component.depth * _scale.z)));
+                box.addShape(new CANNON.Box(new CANNON.Vec3(component.width * _scale.x * 0.5, component.height * _scale.y * 0.5, component.depth * _scale.z * 0.5)));
                 box.shapes[0].material = new CANNON.Material({friction: 0});
                 entity.gameObject.hitbox = box;
                 break;
@@ -70,6 +71,27 @@ function initializeEntity(entity: Entity, scene: THREE.Scene, world: CANNON.Worl
                 hitbox.type = CANNON.Body.DYNAMIC;
                 hitbox.updateMassProperties();
                 break;
+            }
+            case 'text': {
+                component.x = component.x ? component.x : 0;
+                component.y = component.y ? component.y : 0;
+                component.z = component.z ? component.z : 0;
+                component.size = component.size ? component.size : 12;
+                component.screen_x = component.text.length * component.size * -0.2;
+                let text = document.createElement('p');
+                text.innerText = component.text;
+                text.style.position = 'absolute';
+                text.style.left = '0px';
+                text.style.top = '0px';
+                text.style.fontSize = `${component.size}px`;
+                text.style.color = component.color ? component.color : '#000000';
+                text.style.userSelect = 'none';
+                if (component.onClick){
+                    text.style.cursor = 'pointer';
+                    text.onclick = component.onClick;
+                }
+                ui.appendChild(text);
+                entity.gameObject.text = text;
             }
         }
     })
@@ -116,9 +138,88 @@ function initializeEntity(entity: Entity, scene: THREE.Scene, world: CANNON.Worl
 function lerp(start: number, end: number, t: number) {
     return start * (1 - t) + end * t;
 }
+function worldToScreenPosition(width: number, height: number, x: number, y: number, z: number, camera: THREE.PerspectiveCamera){
+    let widthHalf = width / 2;
+    let heightHalf = height / 2;
+    
+    let pos = new THREE.Vector3(x, y, z);
+    pos.project(camera);
+    pos.x = ( pos.x * widthHalf ) + widthHalf;
+    pos.y = - ( pos.y * heightHalf ) + heightHalf;
+    return pos;
+}
 const TIME_STEP = 1/60;
+
+function updateGame(scene: THREE.Scene, world: CANNON.World, renderer: THREE.WebGLRenderer, system: Record<string, Entity>, keyPressed: Record<string, boolean>, camera: THREE.PerspectiveCamera, width: number, height: number){
+
+    Object.values(system).forEach((entity) =>{
+        Object.values(entity.components).forEach((component) =>{
+            switch (component.id){
+                case 'transform': {
+                    const hitbox = entity.gameObject.hitbox as CANNON.Body;
+                    const model = entity.gameObject.model;
+
+                    model.position.copy(hitbox.position);
+                    model.quaternion.copy(hitbox.quaternion);
+                    if (component.time_scale < 1){
+                        let new_scale = {
+                            x: lerp(model.scale.x, component.scale.x, component.time_scale),
+                            y: lerp(model.scale.y, component.scale.y, component.time_scale),
+                            z: lerp(model.scale.z, component.scale.z, component.time_scale)
+                        };
+                        model.scale.set(new_scale.x, new_scale.y, new_scale.z);
+                        if (component.time_scale + 0.05 < 1)
+                            component.time_scale += 0.05;
+                    }
+                    component.x = hitbox.position.x;
+                    component.y = hitbox.position.y;
+                    component.z = hitbox.position.z;
+                    break;
+                }
+                case 'controller': {
+                    const physic = entity.components['physic'];
+                    if (keyPressed['ArrowLeft'])
+                        physic.vel_x -= 0.1;
+                    if (keyPressed['ArrowRight'])
+                        physic.vel_x += 0.1;
+                    if (keyPressed['ArrowUp'])
+                        physic.vel_z -= 0.1;
+                    if (keyPressed['ArrowDown'])
+                        physic.vel_z += 0.1;
+                    break;
+                }
+                case 'physic': {
+                    const hitbox = entity.gameObject.hitbox as CANNON.Body;
+                    hitbox.velocity.set(component.vel_x, component.vel_y, component.vel_z);
+                    component.vel_x *= 0.8;
+                    component.vel_y *= 0.8;
+                    component.vel_z *= 0.8;
+                    break;
+                }
+                case 'camera': {
+                    const transform = entity.components['transform'];
+                    camera.lookAt(new THREE.Vector3(transform.x, transform.y, transform.z));
+                    camera.position.set(transform.x, transform.y + 0.5, transform.z + 0.5)
+                    break;
+                }
+                case 'text': {
+                    const transform = entity.components['transform'];
+                    let pos = worldToScreenPosition(width, height, transform.x + component.x, transform.y + component.y, transform.z + component.z, camera);
+                    const text = entity.gameObject.text as HTMLParagraphElement;
+                    text.style.left = `${pos.x + component.screen_x}px`;
+                    text.style.top = `${pos.y}px`;
+                }
+            }
+        })
+    })
+
+    world.step(TIME_STEP);
+    renderer.render( scene, camera );
+}
+
 export function Game(){
 
+    const {account} = useAccountStore();
     const {setFading} = useTransitionStore();
 
     const system = useRef<Record<string, Entity>>({});
@@ -131,68 +232,11 @@ export function Game(){
 
     const world = useRef<CANNON.World | null>(null);
     const container = useRef<HTMLDivElement | null>(null);
+    const ui = useRef<HTMLDivElement | null>(null);
 
     const [keyPressed, setKeyPressed] = useState<Record<string, boolean>>({});
 
-    function updateGame(){
-
-        Object.values(system.current).forEach((entity) =>{
-            Object.values(entity.components).forEach((component) =>{
-                switch (component.id){
-                    case 'transform': {
-                        const hitbox = entity.gameObject.hitbox as CANNON.Body;
-                        const model = entity.gameObject.model;
-
-                        model.position.copy(hitbox.position);
-                        model.quaternion.copy(hitbox.quaternion);
-                        if (component.time_scale < 1){
-                            let new_scale = {
-                                x: lerp(model.scale.x, component.scale.x, component.time_scale),
-                                y: lerp(model.scale.y, component.scale.y, component.time_scale),
-                                z: lerp(model.scale.z, component.scale.z, component.time_scale)
-                            };
-                            model.scale.set(new_scale.x, new_scale.y, new_scale.z);
-                            if (component.time_scale + 0.05 < 1)
-                                component.time_scale += 0.05;
-                        }
-                        component.x = hitbox.position.x;
-                        component.y = hitbox.position.y;
-                        component.z = hitbox.position.z;
-                        break;
-                    }
-                    case 'controller': {
-                        const physic = entity.components['physic'];
-                        if (keyPressed['ArrowLeft'])
-                            physic.vel_x -= 0.1;
-                        if (keyPressed['ArrowRight'])
-                            physic.vel_x += 0.1;
-                        if (keyPressed['ArrowUp'])
-                            physic.vel_z -= 0.1;
-                        if (keyPressed['ArrowDown'])
-                            physic.vel_z += 0.1;
-                        break;
-                    }
-                    case 'physic': {
-                        const hitbox = entity.gameObject.hitbox as CANNON.Body;
-                        hitbox.velocity.set(component.vel_x, component.vel_y, component.vel_z);
-                        component.vel_x *= 0.8;
-                        component.vel_y *= 0.8;
-                        component.vel_z *= 0.8;
-                        break;
-                    }
-                    case 'camera': {
-                        const transform = entity.components['transform'];
-                        camera.current!.lookAt(new THREE.Vector3(transform.x, transform.y, transform.z));
-                        camera.current!.position.set(transform.x, transform.y + 0.5, transform.z + 0.5)
-                        break;
-                    }
-                }
-            })
-        })
-
-        world.current!.step(TIME_STEP);
-        renderer.current!.render( scene.current!, camera.current! );
-    }
+    const [openLobby, setOpenLobby] = useState<boolean>(false);
 
     // init
     const count = useRef<number>(0);
@@ -287,6 +331,7 @@ export function Game(){
         camera.current!.remove();
         scene.current!.remove();
         renderer.current!.dispose();
+        ui.current!.innerHTML = '';
     }
 
     // add script here
@@ -303,7 +348,7 @@ export function Game(){
             segments: 16,
             color: 0xdae1ed
         });
-        insertEntityToSystem(ground, system.current, scene.current!, world.current!);
+        insertEntityToSystem(ground, system.current, scene.current!, world.current!, ui.current!);
 
         let player = createEntity('player');
         insertComponent(player, {id: 'transform', y: 0.5});
@@ -314,19 +359,54 @@ export function Game(){
             depth: 0.1,
             color: 0x84a6c9
         });
+        insertComponent(player, {
+            id: 'text',
+            text: account.username,
+            y: 0.15,
+            size: 24,
+            color: '#ffffff'
+        })
         insertComponent(player, {id: 'physic'});
         insertComponent(player, {id: 'controller'});
         insertComponent(player, {id: 'camera'});
-        insertEntityToSystem(player, system.current, scene.current!, world.current!);
+        insertEntityToSystem(player, system.current, scene.current!, world.current!, ui.current!);
 
-        renderer.current!.setAnimationLoop(updateGame);
+        let lobby = createEntity('lobby');
+        insertComponent(lobby, {
+            id: 'transform',
+            x: 0, y: 0.15, z: -0.8
+        })
+        insertComponent(lobby, {
+            id: 'box',
+            width: 0.3,
+            height: 0.1,
+            depth: 0.1,
+            color: 0x84a6c9
+        });
+        insertComponent(lobby, {
+            id: 'text',
+            text: 'Lobby',
+            y: 0.1,
+            size: 24,
+            color: '#ffffff',
+            onClick: () =>{
+                setOpenLobby(true);
+            }
+        })
+        insertEntityToSystem(lobby, system.current, scene.current!, world.current!, ui.current!);
+
+
+        renderer.current!.setAnimationLoop(() => updateGame(scene.current!, world.current!, renderer.current!, system.current!, keyPressed, camera.current!, width.current!, height.current!));
     }, [count.current])
 
 
+    useEffect(() =>{
+        console.log(openLobby);
+    }, [openLobby])
 
     return (
         <div className=' relative w-full h-full'>
-            <div className=' absolute z-40 w-full h-full p-2 flex justify-start items-start'>
+            <div ref={ui} className=' absolute z-40 w-full h-full p-2 flex justify-start items-start'>
                 <motion.div
                     className=" mb-5 text-2xl font-semibold p-1 pl-2 pr-2 border-2 border-white rounded-md select-none text-white cursor-pointer"
                     initial={{ scale: 1, color: "#ffffff" }}
@@ -343,6 +423,9 @@ export function Game(){
                 >
                     <p className=' text-sm'>Back</p>
                 </motion.div>   
+                <div className=' absolute w-full h-full flex justify-center items-center pointer-events-none'>
+
+                </div>
             </div>
             <div ref={container} className=" absolute z-0 w-full h-full bg-[#84a6c9] flex justify-center items-center">
 
