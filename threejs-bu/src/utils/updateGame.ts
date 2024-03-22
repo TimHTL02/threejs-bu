@@ -6,6 +6,12 @@ export function updateGame(scene: THREE.Scene, world: CANNON.World, renderer: TH
     Object.values(system).forEach((entity) =>{
         Object.values(entity.components).forEach((component) =>{
             switch (component.id){
+                case 'dev_hitbox': {
+                    const dev_hitbox = entity.gameObject.dev_hitbox;
+                    const hitbox = entity.gameObject.hitbox as CANNON.Body;
+                    dev_hitbox.position.copy(hitbox.position);
+                    break;
+                }
                 case 'transform': {
                     const hitbox = entity.gameObject.hitbox as CANNON.Body;
                     const model = entity.gameObject.model;
@@ -62,6 +68,7 @@ export function updateGame(scene: THREE.Scene, world: CANNON.World, renderer: TH
                     break;
                 }
                 case 'camera': {
+                    const model = entity.gameObject.model;
                     const transform = entity.components['transform'];
                     const physic = entity.components['physic'];
                     camera.lookAt(new THREE.Vector3(transform.x, transform.y, transform.z));
@@ -80,7 +87,7 @@ export function updateGame(scene: THREE.Scene, world: CANNON.World, renderer: TH
             }
         })
     })
-
+    // console.log(scene.children);
     world.step(1 / 60);
     renderer.render( scene, camera );
 }

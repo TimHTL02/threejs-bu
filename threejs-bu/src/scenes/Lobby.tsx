@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useGame } from '../utils/useGame';
-import { createEntity, insertComponent, insertEntityToSystem } from '../utils/gameInitFunctions';
+import { createEntity, downloadFile, insertComponent, insertEntityToSystem } from '../utils/gameInitFunctions';
 import { updateGame } from '../utils/updateGame';
 import { useAccountStore } from '../utils/zustand/useAccountStore';
 import { useTransitionStore } from '../utils/zustand/useTransitionStore';
-import { FaHouse } from "react-icons/fa6";
 import { GameUILayer } from '../utils/GameUILayer';
 import { GameContainerLayer } from '../utils/GameContainerLayer';
+import { loader } from '../utils/initializeEntity';
 
 export function Lobby(){
 
@@ -35,60 +35,74 @@ export function Lobby(){
             return;
         counted.current = true; 
 
-        let ground = createEntity('ground');
-        insertComponent(ground, {id: 'transform', rotate_x: 0});
-        insertComponent(ground, {
-            id: 'circle_plane',
-            radius: 1,
-            segments: 16,
-            color: 0xdae1ed
-        });
-        insertEntityToSystem(ground, system, scene, world, ui.current!);
+        const f = async() =>{
+            let ground = createEntity('ground');
+            insertComponent(ground, {id: 'transform', rotate_x: 0});
+            insertComponent(ground, {
+                id: 'circle_plane',
+                radius: 1,
+                segments: 16,
+                color: 0xdae1ed
+            });
+            await insertEntityToSystem(ground, system, scene, world, ui.current!);
+    
+            let player = createEntity('player');
+            insertComponent(player, {id: 'transform', y: 0.5});
+            insertComponent(player, {
+                id: 'model',
+                bucket: 'characters',
+                file: 'players/knight3.glb',
+                scale: {x: 0.001, y: 0.001, z: 0.001}
+            })
+            insertComponent(player, {
+                id: 'hitbox',
+                width: 0.1,
+                height: 0.1,
+                depth: 0.1
+            });
+            insertComponent(player, {
+                id: 'dev_hitbox',
+                width: 0.1,
+                height: 0.1,
+                depth: 0.1
+            });
+            insertComponent(player, {
+                id: 'text',
+                text: account.username,
+                y: 0.15,
+                size: 24,
+                color: '#ffffff'
+            })
+            insertComponent(player, {id: 'physic'});
+            insertComponent(player, {id: 'controller'});
+            insertComponent(player, {id: 'camera'});
+            await insertEntityToSystem(player, system, scene, world, ui.current!);
 
-        let player = createEntity('player');
-        insertComponent(player, {id: 'transform', y: 0.5});
-        insertComponent(player, {
-            id: 'box',
-            width: 0.1,
-            height: 0.1,
-            depth: 0.1,
-            color: 0x84a6c9
-        });
-        insertComponent(player, {
-            id: 'text',
-            text: account.username,
-            y: 0.15,
-            size: 24,
-            color: '#ffffff'
-        })
-        insertComponent(player, {id: 'physic'});
-        insertComponent(player, {id: 'controller'});
-        insertComponent(player, {id: 'camera'});
-        insertEntityToSystem(player, system, scene, world, ui.current!);
-
-        let lobby = createEntity('lobby');
-        insertComponent(lobby, {
-            id: 'transform',
-            x: 0, y: 0.15, z: -0.8
-        })
-        insertComponent(lobby, {
-            id: 'box',
-            width: 0.3,
-            height: 0.1,
-            depth: 0.1,
-            color: 0x84a6c9
-        });
-        insertComponent(lobby, {
-            id: 'text',
-            text: 'Lobby',
-            y: 0.1,
-            size: 24,
-            color: '#ffffff',
-            onClick: () => setOpenRoomMenu(openRoomMenu => !openRoomMenu)
-        })
-        insertEntityToSystem(lobby, system, scene, world, ui.current!);
-
-        setFading(false, '');
+            let lobby = createEntity('lobby');
+            insertComponent(lobby, {
+                id: 'transform',
+                x: 0, y: 0.15, z: -0.8
+            })
+            insertComponent(lobby, {
+                id: 'box',
+                width: 0.3,
+                height: 0.1,
+                depth: 0.1,
+                color: 0x84a6c9
+            });
+            insertComponent(lobby, {
+                id: 'text',
+                text: 'Lobby',
+                y: 0.1,
+                size: 24,
+                color: '#ffffff',
+                onClick: () => setOpenRoomMenu(openRoomMenu => !openRoomMenu)
+            })
+            await insertEntityToSystem(lobby, system, scene, world, ui.current!);
+    
+            setFading(false, '');
+        };
+        f();
     }, [isReady])
 
     useEffect(() =>{
@@ -96,7 +110,10 @@ export function Lobby(){
             return;
         
         renderer.setAnimationLoop(() => updateGame(scene, world, renderer, system, keyPressed, camera, screenSize))
-    }, [isReady, screenSize])
+    }, [isReady, scene, world, renderer, system, keyPressed, camera, screenSize])
+
+    // let model_blob = await downloadFile('characters', 'players/knight3.glb');
+
 
     return (
         <div className=" relative w-full h-full bg-[#84a6c9] flex justify-center items-center">

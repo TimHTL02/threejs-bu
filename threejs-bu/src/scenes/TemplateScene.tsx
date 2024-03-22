@@ -41,9 +41,15 @@ export function TemplateScene(){
         });
         insertEntityToSystem(ground, system, scene, world, ui.current!);
 
-        renderer.setAnimationLoop(() => updateGame(scene, world, renderer, system, keyPressed, camera, screenSize))
         setFading(false, '');
     }, [isReady])
+
+    useEffect(() =>{
+        if (!isReady)
+            return;
+        
+        renderer.setAnimationLoop(() => updateGame(scene, world, renderer, system, keyPressed, camera, screenSize))
+    }, [isReady, scene, world, renderer, system, keyPressed, camera, screenSize])
 
     return (
         <div className=" relative w-full h-full bg-[#84a6c9] flex justify-center items-center">

@@ -1,7 +1,17 @@
 import * as THREE from 'three';
 import * as CANNON from 'cannon-es'
 import { initializeEntity } from './initializeEntity';
+import { supabase } from '..';
 
+export async function downloadFile(bucket: string, file: string){
+
+    const { data, error } = await supabase
+    .storage
+    .from(bucket)
+    .download(file);
+
+    return data;
+}
 export type GameObject = {
     [key: string]: any
 }
@@ -26,8 +36,8 @@ export function createEntity(id: string){
 export function insertComponent(entity: Entity, component: Component){
     entity.components[component.id] = component;
 }
-export function insertEntityToSystem(entity: Entity, system: Record<string, Entity>, scene: THREE.Scene, world: CANNON.World, ui: HTMLDivElement){
-    initializeEntity(entity, scene, world, ui);
+export async function insertEntityToSystem(entity: Entity, system: Record<string, Entity>, scene: THREE.Scene, world: CANNON.World, ui: HTMLDivElement){
+    await initializeEntity(entity, scene, world, ui);
     system[entity.id] = entity;
 }
 export function lerp(start: number, end: number, t: number) {

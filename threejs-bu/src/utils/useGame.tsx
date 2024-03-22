@@ -12,6 +12,7 @@ export function useGame(props: {container: HTMLDivElement, ui: HTMLDivElement}){
     const camera = useRef<THREE.PerspectiveCamera | null>(null);
     const scene = useRef<THREE.Scene | null>(null);
     const renderer = useRef<THREE.WebGLRenderer | null>(null);
+    const ambientLight = useRef<THREE.AmbientLight | null>(null);
 
     const world = useRef<CANNON.World | null>(null);
 
@@ -56,6 +57,9 @@ export function useGame(props: {container: HTMLDivElement, ui: HTMLDivElement}){
         camera.current.rotateX(-0.4);
 
         scene.current = new THREE.Scene();
+
+        ambientLight.current = new THREE.AmbientLight( 0x404040, 100 ); // soft white light
+        scene.current.add( ambientLight.current );
 
         renderer.current = new THREE.WebGLRenderer( { antialias: true } );
         renderer.current.setSize( window.innerWidth, window.innerHeight );

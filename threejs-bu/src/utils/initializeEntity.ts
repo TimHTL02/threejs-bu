@@ -1,16 +1,46 @@
 import * as THREE from 'three';
 import * as CANNON from 'cannon-es'
-import { Entity } from "./gameInitFunctions";
+import { Entity, downloadFile } from "./gameInitFunctions";
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 
-export function initializeEntity(entity: Entity, scene: THREE.Scene, world: CANNON.World, ui: HTMLDivElement){
+export const loader = new GLTFLoader();
+
+export async function initializeEntity(entity: Entity, scene: THREE.Scene, world: CANNON.World, ui: HTMLDivElement){
     let transform = entity.components['transform'];
     let _scale = {x: 1, y: 1, z: 1};
     if (transform.scale){
         _scale = transform.scale;
     }
 
-    Object.values(entity.components).forEach((component) =>{
+    let components = Object.values(entity.components);
+    for(let i = 0; i < components.length; i++){
+        let component = components[i];
         switch (component.id){
+            case 'model': {
+                let model_blob = await downloadFile(component.bucket, component.file);
+                if (!model_blob)
+                    continue;
+
+                let model_array_buffer = await model_blob?.arrayBuffer();
+                let model_gltf = await loader.parseAsync(model_array_buffer, "");
+                let model = model_gltf.scene;
+                _scale = component.scale;
+                entity.gameObject.model = model;
+                break;
+            }
+            case 'hitbox': {
+                const box = new CANNON.Body({mass: 0})
+                box.fixedRotation = true;
+                box.addShape(new CANNON.Box(new CANNON.Vec3(component.width * 0.5, component.height * 0.5, component.depth * 0.5)));
+                box.shapes[0].material = new CANNON.Material({friction: 0});
+                entity.gameObject.hitbox = box;
+                break;
+            }
+            case 'dev_hitbox': {
+                entity.gameObject.dev_hitbox = new THREE.Mesh( new THREE.BoxGeometry( component.width, component.height, component.depth ), new THREE.MeshBasicMaterial( {color: 0xcbdbb8} ) );
+                scene.add(entity.gameObject.dev_hitbox);
+                break;
+            }
             case 'circle_plane': {
                 entity.gameObject.model = new THREE.Mesh( new THREE.CylinderGeometry(component.radius * _scale.x, component.radius * _scale.x, 0.2, component.segments), new THREE.MeshBasicMaterial( {color: component.color, side: THREE.DoubleSide} ) );
                 const circle_plane = new CANNON.Body({mass: 0})
@@ -67,7 +97,7 @@ export function initializeEntity(entity: Entity, scene: THREE.Scene, world: CANN
                 entity.gameObject.text = text;
             }
         }
-    })
+    }
 
     // Apply Transform To Model
     if (entity.gameObject.model){
