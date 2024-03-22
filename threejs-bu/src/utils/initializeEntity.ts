@@ -35,6 +35,10 @@ export function initializeEntity(entity: Entity, scene: THREE.Scene, world: CANN
                 component.vel_y = 0;
                 component.vel_z = 0;
 
+                component.vel_cam_x = 0;
+                component.vel_cam_y = 0;
+                component.vel_cam_z = 0;
+
                 let hitbox = entity.gameObject.hitbox as CANNON.Body;
                 hitbox.mass = component.mass ? component.mass : 1;
                 hitbox.type = CANNON.Body.DYNAMIC;

@@ -22,6 +22,9 @@ export function updateGame(scene: THREE.Scene, world: CANNON.World, renderer: TH
                         if (component.time_scale + 0.05 < 1)
                             component.time_scale += 0.05;
                     }
+                    if (component.time_camera < 1){
+                        component.time_camera += 0.005;
+                    }
                     component.x = hitbox.position.x;
                     component.y = hitbox.position.y;
                     component.z = hitbox.position.z;
@@ -29,14 +32,22 @@ export function updateGame(scene: THREE.Scene, world: CANNON.World, renderer: TH
                 }
                 case 'controller': {
                     const physic = entity.components['physic'];
-                    if (keyPressed['ArrowLeft'])
+                    if (keyPressed['ArrowLeft']){
                         physic.vel_x -= 0.1;
-                    if (keyPressed['ArrowRight'])
+                        physic.vel_cam_x -= 0.005;
+                    }
+                    if (keyPressed['ArrowRight']){
                         physic.vel_x += 0.1;
-                    if (keyPressed['ArrowUp'])
+                        physic.vel_cam_x += 0.005;
+                    }
+                    if (keyPressed['ArrowUp']){
                         physic.vel_z -= 0.1;
-                    if (keyPressed['ArrowDown'])
+                        physic.vel_cam_z -= 0.005;
+                    }
+                    if (keyPressed['ArrowDown']){
                         physic.vel_z += 0.1;
+                        physic.vel_cam_z += 0.005;
+                    }
                     break;
                 }
                 case 'physic': {
@@ -45,12 +56,18 @@ export function updateGame(scene: THREE.Scene, world: CANNON.World, renderer: TH
                     component.vel_x *= 0.8;
                     component.vel_y *= 0.8;
                     component.vel_z *= 0.8;
+                    component.vel_cam_x *= 0.95;
+                    component.vel_cam_y *= 0.95;
+                    component.vel_cam_z *= 0.95;
                     break;
                 }
                 case 'camera': {
                     const transform = entity.components['transform'];
+                    const physic = entity.components['physic'];
                     camera.lookAt(new THREE.Vector3(transform.x, transform.y, transform.z));
-                    camera.position.set(transform.x, transform.y + 0.5, transform.z + 0.5)
+                    camera.position.x = transform.x + physic.vel_cam_x;
+                    camera.position.y = transform.y + physic.vel_cam_y + 0.4;
+                    camera.position.z = transform.z + physic.vel_cam_z + 0.6;
                     break;
                 }
                 case 'text': {
