@@ -43,4 +43,3 @@ export function worldToScreenPosition(width: number, height: number, x: number, 
     pos.y = - ( pos.y * heightHalf ) + heightHalf;
     return pos;
 }
-export const TIME_STEP = 1/60;

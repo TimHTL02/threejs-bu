@@ -2,10 +2,12 @@ import { useEffect, useRef, useState } from "react";
 import { Entity } from "./gameInitFunctions";
 import * as THREE from 'three';
 import * as CANNON from 'cannon-es'
+import { exit } from "process";
 
 export function useGame(props: {container: HTMLDivElement, ui: HTMLDivElement}){
-    const width = useRef<number>(0);
-    const height = useRef<number>(0);
+
+    const [screenSize, setScreenSize] = useState<{width: number, height: number}>({width: 0, height: 0});
+
     const system = useRef<Record<string, Entity>>({});
     const camera = useRef<THREE.PerspectiveCamera | null>(null);
     const scene = useRef<THREE.Scene | null>(null);
@@ -19,10 +21,18 @@ export function useGame(props: {container: HTMLDivElement, ui: HTMLDivElement}){
 
     // GC
     function Exit(){
-        camera.current!.remove();
-        scene.current!.remove();
-        renderer.current!.dispose();
+        camera.current?.remove();
+        camera.current = null;
+
+        scene.current?.remove();
+        scene.current = null;
+
+        renderer.current?.dispose();
+        renderer.current = null;
+
         props.ui.innerHTML = '';
+
+        setIsReady(false);
     }
 
     const [init, setInit] = useState<boolean>(false);
@@ -66,31 +76,42 @@ export function useGame(props: {container: HTMLDivElement, ui: HTMLDivElement}){
         onresize();
         setIsReady(true);
 
+        return () =>{
+            Exit()
+        }
+
     }, [init])
 
     const onresize = () =>{
         if (!renderer.current)
             return;
 
-        width.current = window.innerWidth;
-        height.current = window.innerHeight;
+        let _width = window.innerWidth;
+        let _height = window.innerHeight;
         
-        let currentAspectRatio =  width.current / height.current;
+        let currentAspectRatio =  _width / _height;
         let aspectRatio = 16 / 9;
 
         let newWidth = 0;
         let newHeight = 0;
         if (currentAspectRatio > aspectRatio) {
             // The current aspect ratio is wider than 16:9
-            newWidth = height.current * aspectRatio;
-            newHeight = height.current;
-            } else {
+            newWidth = _height * aspectRatio;
+            newHeight = _height;
+        } else {
             // The current aspect ratio is taller or equal to 16:9
-            newWidth = width.current;
-            newHeight = width.current / aspectRatio;
+            newWidth = _width;
+            newHeight = _width / aspectRatio;
             }
 
         renderer.current!.setSize(newWidth, newHeight);
+
+        setScreenSize(
+            {
+                width: newWidth,
+                height: newHeight
+            }
+        );
 
     }
 
@@ -118,8 +139,7 @@ export function useGame(props: {container: HTMLDivElement, ui: HTMLDivElement}){
     }, [])
 
     return ({
-        width: width,
-        height: height,
+        screenSize: screenSize,
         system: system.current!,
         camera: camera.current!,
         scene: scene.current!,

@@ -6,6 +6,8 @@ import { updateGame } from '../utils/updateGame';
 import { useAccountStore } from '../utils/zustand/useAccountStore';
 import { useTransitionStore } from '../utils/zustand/useTransitionStore';
 import { FaHouse } from "react-icons/fa6";
+import { GameUILayer } from '../utils/GameUILayer';
+import { GameContainerLayer } from '../utils/GameContainerLayer';
 
 export function Lobby(){
 
@@ -15,7 +17,7 @@ export function Lobby(){
     const container = useRef<HTMLDivElement | null>(null);
     const ui = useRef<HTMLDivElement | null>(null);
 
-    const {camera, scene, system, renderer, world, keyPressed, isReady, exit, init} = useGame({container: container.current!, ui: ui.current!});
+    const {camera, scene, system, renderer, world, keyPressed, isReady, screenSize, exit, init} = useGame({container: container.current!, ui: ui.current!});
 
     useEffect(() =>{
         if (container.current && ui.current)
@@ -86,59 +88,38 @@ export function Lobby(){
         })
         insertEntityToSystem(lobby, system, scene, world, ui.current!);
 
-        renderer.setAnimationLoop(() => updateGame(scene, world, renderer, system, keyPressed, camera, window.innerWidth, window.innerHeight));
         setFading(false, '');
     }, [isReady])
 
     useEffect(() =>{
-        console.log(openRoomMenu)
-    }, [openRoomMenu])
+        if (!isReady)
+            return;
+        
+        renderer.setAnimationLoop(() => updateGame(scene, world, renderer, system, keyPressed, camera, screenSize))
+    }, [isReady, screenSize])
 
     return (
-        <div className=' relative w-full h-full'>
-            <div ref={ui} className=' absolute z-40 w-full h-full p-2 flex justify-start items-start'>
-                <motion.div
-                    className=" mb-5 text-2xl font-semibold p-1 pl-2 pr-2 border-2 border-white rounded-md select-none text-white cursor-pointer"
-                    initial={{ scale: 1, color: "#ffffff" }}
-                    whileHover={{ scale: 1.5, color: "#000000" }}
-                    transition={{
-                    type: "spring",
-                    bounce: 0.6,
-                    }}
-                    whileTap={{ scale: 0.8, rotateZ: 0 }}
-                    onClick={() =>{
-                        exit();
-                        setFading(true, '/');
-                    }}
-                >
-                    <p className=' text-sm'>Back</p>
-                </motion.div>   
-                <div className=' absolute w-full h-full flex justify-center items-center pointer-events-none'>
-                    {
-                        openRoomMenu ?
-                        <div className=' pointer-events-auto w-full md:w-1/2 p-1 pl-4 pr-4 flex flex-col justify-center items-center bg-[#283543] text-white rounded-md'>
-                            <FaHouse />
-                            <p className=' font-semibold text-xl'>Room Menu</p>
-                            <div className='w-full inline-flex justify-start'>
-                                <div className=' p-1 bg-[#425366] rounded-md cursor-pointer hover:opacity-80'>
-                                    Create Room
-                                </div>
-                            </div>
-                            <div className=' p-1 bg-[#425366] rounded-md cursor-pointer hover:opacity-80'
-                                onClick={() =>{
-                                    setOpenRoomMenu(!openRoomMenu);
-                                }}
-                            >
-                                Close
-                            </div>
-                        </div>
-                        : <></>
-                    }
-                </div>
+        <div className=" relative w-full h-full bg-[#84a6c9] flex justify-center items-center">
+            
+            <div className=' w-full h-full flex justify-start items-start pointer-events-none p-2'>
+                <motion.div className=" pointer-events-auto text-sm font-semibold p-1 pl-2 pr-2 border-2 border-white rounded-md select-none text-white cursor-pointer"
+                initial={{ scale: 1, color: "#ffffff" }}
+                whileHover={{ scale: 1.2, color: "#000000" }}
+                transition={{
+                  type: "spring",
+                  bounce: 0.6,
+                }}
+                whileTap={{ scale: 0.8, rotateZ: 0 }}
+                onClick={() =>{
+                    exit();
+                    setFading(true, '/');
+                }}>
+                    Back
+                </motion.div>
             </div>
-            <div ref={container} className=" absolute z-0 w-full h-full bg-[#84a6c9] flex justify-center items-center">
 
-            </div>
+            <GameUILayer forwardedRef={ui} width={screenSize.width} height={screenSize.height} />
+            <GameContainerLayer forwardRef={container} />
         </div>
     )
 }

@@ -1,8 +1,8 @@
 import * as THREE from 'three';
 import * as CANNON from 'cannon-es'
-import { Entity, TIME_STEP, lerp, worldToScreenPosition } from './gameInitFunctions';
+import { Entity, lerp, worldToScreenPosition } from './gameInitFunctions';
 
-export function updateGame(scene: THREE.Scene, world: CANNON.World, renderer: THREE.WebGLRenderer, system: Record<string, Entity>, keyPressed: Record<string, boolean>, camera: THREE.PerspectiveCamera, width: number, height: number){
+export function updateGame(scene: THREE.Scene, world: CANNON.World, renderer: THREE.WebGLRenderer, system: Record<string, Entity>, keyPressed: Record<string, boolean>, camera: THREE.PerspectiveCamera, screenSize: {width: number, height: number}){
     Object.values(system).forEach((entity) =>{
         Object.values(entity.components).forEach((component) =>{
             switch (component.id){
@@ -55,7 +55,7 @@ export function updateGame(scene: THREE.Scene, world: CANNON.World, renderer: TH
                 }
                 case 'text': {
                     const transform = entity.components['transform'];
-                    let pos = worldToScreenPosition(width, height, transform.x + component.x, transform.y + component.y, transform.z + component.z, camera);
+                    let pos = worldToScreenPosition(screenSize.width, screenSize.height, transform.x + component.x, transform.y + component.y, transform.z + component.z, camera);
                     const text = entity.gameObject.text as HTMLParagraphElement;
                     text.style.left = `${pos.x + component.screen_x}px`;
                     text.style.top = `${pos.y}px`;
@@ -64,6 +64,6 @@ export function updateGame(scene: THREE.Scene, world: CANNON.World, renderer: TH
         })
     })
 
-    world.step(TIME_STEP);
+    world.step(1 / 60);
     renderer.render( scene, camera );
 }
