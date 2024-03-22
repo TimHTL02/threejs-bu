@@ -1,7 +1,7 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { Transition } from "./Transition";
 import { Cover } from "./Cover";
-import { Game } from './Game';
+import { Lobby } from './scenes/Lobby';
 
 export function App(){
 
@@ -11,7 +11,7 @@ export function App(){
         <Transition />
             <Routes>
                 <Route index element={<Cover />} />
-                <Route path='/game' element={<Game />} />
+                <Route path='/lobby' element={<Lobby />} />
             </Routes>
         <Cover />
     </div>

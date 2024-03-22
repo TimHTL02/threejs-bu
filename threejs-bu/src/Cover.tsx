@@ -138,7 +138,7 @@ export function Cover() {
                 }}
                 whileTap={{ scale: 0.8, rotateZ: 0 }}
                 onClick={() =>{
-                  setFading(true, '/game');
+                  setFading(true, '/lobby');
                 }}
               >
                 <p>Play</p>

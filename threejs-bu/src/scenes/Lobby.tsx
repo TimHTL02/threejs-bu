@@ -1,14 +1,13 @@
-import * as THREE from 'three';
-import * as CANNON from 'cannon-es'
 import { useEffect, useRef, useState } from 'react';
-import { useTransitionStore } from './utils/zustand/useTransitionStore';
 import { motion } from 'framer-motion';
-import { useAccountStore } from './utils/zustand/useAccountStore';
-import { Entity, createEntity, insertComponent, insertEntityToSystem } from './utils/gameInitFunctions';
-import { updateGame } from './utils/updateGame';
-import { useGame } from './utils/useGame';
+import { useGame } from '../utils/useGame';
+import { createEntity, insertComponent, insertEntityToSystem } from '../utils/gameInitFunctions';
+import { updateGame } from '../utils/updateGame';
+import { useAccountStore } from '../utils/zustand/useAccountStore';
+import { useTransitionStore } from '../utils/zustand/useTransitionStore';
+import { FaHouse } from "react-icons/fa6";
 
-export function Game(){
+export function Lobby(){
 
     const {account} = useAccountStore();
     const {setFading} = useTransitionStore();
@@ -16,18 +15,23 @@ export function Game(){
     const container = useRef<HTMLDivElement | null>(null);
     const ui = useRef<HTMLDivElement | null>(null);
 
-    const system = useRef<Record<string, Entity>>({});
-    const {camera, scene, renderer, world, keyPressed, isReady, exit, init} = useGame({container: container.current!, ui: ui.current!});
+    const {camera, scene, system, renderer, world, keyPressed, isReady, exit, init} = useGame({container: container.current!, ui: ui.current!});
 
     useEffect(() =>{
         if (container.current && ui.current)
             init(true);
     }, [container.current, ui.current])
 
+    const [openRoomMenu, setOpenRoomMenu] = useState<boolean>(false);
+
     // add script here
+    const counted = useRef<boolean>(false);
     useEffect(() =>{
+        if (counted.current)
+            return;
         if (!isReady)
             return;
+        counted.current = true; 
 
         let ground = createEntity('ground');
         insertComponent(ground, {id: 'transform', rotate_x: 0});
@@ -37,7 +41,7 @@ export function Game(){
             segments: 16,
             color: 0xdae1ed
         });
-        insertEntityToSystem(ground, system.current, scene, world, ui.current!);
+        insertEntityToSystem(ground, system, scene, world, ui.current!);
 
         let player = createEntity('player');
         insertComponent(player, {id: 'transform', y: 0.5});
@@ -58,7 +62,7 @@ export function Game(){
         insertComponent(player, {id: 'physic'});
         insertComponent(player, {id: 'controller'});
         insertComponent(player, {id: 'camera'});
-        insertEntityToSystem(player, system.current, scene, world, ui.current!);
+        insertEntityToSystem(player, system, scene, world, ui.current!);
 
         let lobby = createEntity('lobby');
         insertComponent(lobby, {
@@ -78,15 +82,17 @@ export function Game(){
             y: 0.1,
             size: 24,
             color: '#ffffff',
-            onClick: () =>{
-
-            }
+            onClick: () => setOpenRoomMenu(openRoomMenu => !openRoomMenu)
         })
-        insertEntityToSystem(lobby, system.current, scene, world, ui.current!);
+        insertEntityToSystem(lobby, system, scene, world, ui.current!);
 
-        renderer.setAnimationLoop(() => updateGame(scene, world, renderer, system.current, keyPressed, camera, window.innerWidth, window.innerHeight));
+        renderer.setAnimationLoop(() => updateGame(scene, world, renderer, system, keyPressed, camera, window.innerWidth, window.innerHeight));
         setFading(false, '');
     }, [isReady])
+
+    useEffect(() =>{
+        console.log(openRoomMenu)
+    }, [openRoomMenu])
 
     return (
         <div className=' relative w-full h-full'>
@@ -108,7 +114,26 @@ export function Game(){
                     <p className=' text-sm'>Back</p>
                 </motion.div>   
                 <div className=' absolute w-full h-full flex justify-center items-center pointer-events-none'>
-
+                    {
+                        openRoomMenu ?
+                        <div className=' pointer-events-auto w-full md:w-1/2 p-1 pl-4 pr-4 flex flex-col justify-center items-center bg-[#283543] text-white rounded-md'>
+                            <FaHouse />
+                            <p className=' font-semibold text-xl'>Room Menu</p>
+                            <div className='w-full inline-flex justify-start'>
+                                <div className=' p-1 bg-[#425366] rounded-md cursor-pointer hover:opacity-80'>
+                                    Create Room
+                                </div>
+                            </div>
+                            <div className=' p-1 bg-[#425366] rounded-md cursor-pointer hover:opacity-80'
+                                onClick={() =>{
+                                    setOpenRoomMenu(!openRoomMenu);
+                                }}
+                            >
+                                Close
+                            </div>
+                        </div>
+                        : <></>
+                    }
                 </div>
             </div>
             <div ref={container} className=" absolute z-0 w-full h-full bg-[#84a6c9] flex justify-center items-center">

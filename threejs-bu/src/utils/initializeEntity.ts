@@ -57,7 +57,7 @@ export function initializeEntity(entity: Entity, scene: THREE.Scene, world: CANN
                 text.style.userSelect = 'none';
                 if (component.onClick){
                     text.style.cursor = 'pointer';
-                    text.onclick = component.onClick;
+                    text.addEventListener('click', component.onClick);
                 }
                 ui.appendChild(text);
                 entity.gameObject.text = text;
