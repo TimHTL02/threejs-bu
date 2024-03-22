@@ -112,9 +112,6 @@ export function Lobby(){
         renderer.setAnimationLoop(() => updateGame(scene, world, renderer, system, keyPressed, camera, screenSize))
     }, [isReady, scene, world, renderer, system, keyPressed, camera, screenSize])
 
-    // let model_blob = await downloadFile('characters', 'players/knight3.glb');
-
-
     return (
         <div className=" relative w-full h-full bg-[#84a6c9] flex justify-center items-center">
             
