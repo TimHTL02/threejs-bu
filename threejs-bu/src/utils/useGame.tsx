@@ -24,7 +24,10 @@ export function useGame(props: {container: HTMLDivElement, ui: HTMLDivElement}){
         props.ui.innerHTML = '';
     }
 
+    const [init, setInit] = useState<boolean>(false);
     useEffect(() =>{
+        if (!init)
+            return;
         if (!props.container)
             return;
         if (!props.ui)
@@ -57,10 +60,7 @@ export function useGame(props: {container: HTMLDivElement, ui: HTMLDivElement}){
 
         setIsReady(true);
 
-        return () => {
-            Exit();
-        }
-    }, [props.container, props.ui])
+    }, [init])
 
     // resize window
     useEffect(() =>{
@@ -119,6 +119,8 @@ export function useGame(props: {container: HTMLDivElement, ui: HTMLDivElement}){
         renderer: renderer.current!,
         world: world.current!,
         keyPressed: keyPressed,
-        isReady: isReady
+        isReady: isReady,
+        exit: Exit,
+        init: setInit
     })
 }

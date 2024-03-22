@@ -17,12 +17,18 @@ export function Game(){
     const ui = useRef<HTMLDivElement | null>(null);
 
     const system = useRef<Record<string, Entity>>({});
-    const {camera, scene, renderer, world, keyPressed, width, height, isReady} = useGame({container: container.current!, ui: ui.current!});
+    const {camera, scene, renderer, world, keyPressed, isReady, exit, init} = useGame({container: container.current!, ui: ui.current!});
+
+    useEffect(() =>{
+        if (container.current && ui.current)
+            init(true);
+    }, [container.current, ui.current])
 
     // add script here
     useEffect(() =>{
         if (!isReady)
             return;
+
         let ground = createEntity('ground');
         insertComponent(ground, {id: 'transform', rotate_x: 0});
         insertComponent(ground, {
@@ -79,11 +85,8 @@ export function Game(){
         insertEntityToSystem(lobby, system.current, scene, world, ui.current!);
 
         renderer.setAnimationLoop(() => updateGame(scene, world, renderer, system.current, keyPressed, camera, window.innerWidth, window.innerHeight));
-    }, [isReady])
-
-    useEffect(() =>{
         setFading(false, '');
-    }, [])
+    }, [isReady])
 
     return (
         <div className=' relative w-full h-full'>
@@ -98,6 +101,7 @@ export function Game(){
                     }}
                     whileTap={{ scale: 0.8, rotateZ: 0 }}
                     onClick={() =>{
+                        exit();
                         setFading(true, '/');
                     }}
                 >
