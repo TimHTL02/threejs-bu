@@ -67,7 +67,7 @@ export function Lobby(){
                 size: 24,
                 color: '#ffffff'
             })
-            insertComponent(player, {id: 'physic'});
+            insertComponent(player, {id: 'physic', static: true});
             insertComponent(player, {id: 'controller'});
             insertComponent(player, {id: 'camera'});
             await insertEntityToSystem(player, system, scene, world, ui.current!);
@@ -75,7 +75,7 @@ export function Lobby(){
             let lobby = createEntity('lobby');
             insertComponent(lobby, {
                 id: 'transform',
-                x: 0, y: 0.15, z: -0.8
+                x: 0, y: 0.45, z: -0.5
             })
             insertComponent(lobby, {
                 id: 'box',
@@ -84,6 +84,7 @@ export function Lobby(){
                 depth: 0.1,
                 color: 0x84a6c9
             });
+            insertComponent(lobby, {id: 'physic'});
             insertComponent(lobby, {
                 id: 'text',
                 text: 'Lobby',

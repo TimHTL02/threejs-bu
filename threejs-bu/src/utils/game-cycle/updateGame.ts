@@ -79,20 +79,23 @@ export function updateGame(scene: THREE.Scene, world: CANNON.World, renderer: TH
 
                     component.previous = keyPressed;
 
-                    const normalized_vel = new THREE.Vector3(physic.vel_x, physic.vel_y, physic.vel_z).normalize();
-                    var mx = new THREE.Matrix4().lookAt(normalized_vel,new THREE.Vector3(0,0,0),new THREE.Vector3(0,1,0));
-                    var qt = new THREE.Quaternion().setFromRotationMatrix(mx);
-                    
-                    physic.rotate_x = qt.x;
-                    physic.rotate_y = qt.y;
-                    physic.rotate_z = qt.z;
-                    physic.rotate_w = qt.w;
+                    if (physic.static){
+                        const normalized_vel = new THREE.Vector3(physic.vel_x, physic.vel_y, physic.vel_z).normalize();
+                        var mx = new THREE.Matrix4().lookAt(normalized_vel,new THREE.Vector3(0,0,0),new THREE.Vector3(0,1,0));
+                        var qt = new THREE.Quaternion().setFromRotationMatrix(mx);
+                        
+                        physic.rotate_x = qt.x;
+                        physic.rotate_y = qt.y;
+                        physic.rotate_z = qt.z;
+                        physic.rotate_w = qt.w;
+                    }
                     break;
                 }
                 case 'physic': {
                     const hitbox = entity.gameObject.hitbox as CANNON.Body;
 
-                    hitbox.quaternion.set(component.rotate_x, component.rotate_y, component.rotate_z, component.rotate_w);
+                    if (component.static)
+                        hitbox.quaternion.set(component.rotate_x, component.rotate_y, component.rotate_z, component.rotate_w);
                     hitbox.velocity.set(component.vel_x, component.vel_y, component.vel_z);
                     component.vel_x *= 0.8;
                     component.vel_y *= 0.8;
