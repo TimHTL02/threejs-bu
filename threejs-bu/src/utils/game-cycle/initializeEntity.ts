@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import * as CANNON from 'cannon-es'
-import { Entity, downloadFile } from "./gameInitFunctions";
+import { Entity, downloadFile } from "../gameInitFunctions";
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 
 export const loader = new GLTFLoader();
@@ -69,6 +69,11 @@ export async function initializeEntity(entity: Entity, scene: THREE.Scene, world
                 component.vel_cam_y = 0;
                 component.vel_cam_z = 0;
 
+                component.rotate_x = 0;
+                component.rotate_y = 0;
+                component.rotate_z = 0;
+                component.rotate_w = 0;
+
                 let hitbox = entity.gameObject.hitbox as CANNON.Body;
                 hitbox.mass = component.mass ? component.mass : 1;
                 hitbox.type = CANNON.Body.DYNAMIC;
@@ -114,7 +119,8 @@ export async function initializeEntity(entity: Entity, scene: THREE.Scene, world
             rotate_y: transform.rotate_y ? transform.rotate_y : 0,
             rotate_z: transform.rotate_z ? transform.rotate_z : 0,
             scale: _scale,
-            time_scale: 0
+            time_scale: 0,
+            time_rotate: 0
         };
         transform = entity.components['transform'];
         model.translateX(transform.x);

@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import * as CANNON from 'cannon-es'
-import { initializeEntity } from './initializeEntity';
+import { initializeEntity } from './game-cycle/initializeEntity';
 import { supabase } from '..';
 
 export async function downloadFile(bucket: string, file: string){

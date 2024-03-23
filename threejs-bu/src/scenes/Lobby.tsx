@@ -2,12 +2,12 @@ import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useGame } from '../utils/useGame';
 import { createEntity, downloadFile, insertComponent, insertEntityToSystem } from '../utils/gameInitFunctions';
-import { updateGame } from '../utils/updateGame';
+import { updateGame } from '../utils/game-cycle/updateGame';
 import { useAccountStore } from '../utils/zustand/useAccountStore';
 import { useTransitionStore } from '../utils/zustand/useTransitionStore';
 import { GameUILayer } from '../utils/GameUILayer';
 import { GameContainerLayer } from '../utils/GameContainerLayer';
-import { loader } from '../utils/initializeEntity';
+import { loader } from '../utils/game-cycle/initializeEntity';
 
 export function Lobby(){
 
@@ -56,12 +56,6 @@ export function Lobby(){
             })
             insertComponent(player, {
                 id: 'hitbox',
-                width: 0.1,
-                height: 0.1,
-                depth: 0.1
-            });
-            insertComponent(player, {
-                id: 'dev_hitbox',
                 width: 0.1,
                 height: 0.1,
                 depth: 0.1

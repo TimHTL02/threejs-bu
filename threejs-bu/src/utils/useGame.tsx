@@ -123,11 +123,13 @@ export function useGame(props: {container: HTMLDivElement, ui: HTMLDivElement}){
     useEffect(() =>{
         const onkeydown = (e: KeyboardEvent) => {
             let dict = keyPressed;
+
             dict[e.key] = true;
             setKeyPressed({...dict});
         }
         const onkeyup = (e: KeyboardEvent) => {
             let dict = keyPressed;
+
             delete dict[e.key];
             setKeyPressed({...dict});
         }

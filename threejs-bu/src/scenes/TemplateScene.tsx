@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { useTransitionStore } from '../utils/zustand/useTransitionStore';
 import { useGame } from '../utils/useGame';
 import { createEntity, insertComponent, insertEntityToSystem } from '../utils/gameInitFunctions';
-import { updateGame } from '../utils/updateGame';
+import { updateGame } from '../utils/game-cycle/updateGame';
 import { GameUILayer } from '../utils/GameUILayer';
 import { GameContainerLayer } from '../utils/GameContainerLayer';
 
