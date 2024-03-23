@@ -28,6 +28,7 @@ export function useGame(props: {container: HTMLDivElement, ui: HTMLDivElement}){
         scene.current?.remove();
         scene.current = null;
 
+        renderer.current?.setAnimationLoop(null);
         renderer.current?.dispose();
         renderer.current = null;
 

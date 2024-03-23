@@ -140,7 +140,6 @@ export async function initializeEntity(entity: Entity, scene: THREE.Scene, world
         const hitbox = entity.gameObject.hitbox as CANNON.Body;
         hitbox.position.set(transform.x, transform.y, transform.z);
         hitbox.quaternion.setFromEuler(transform.rotate_x, transform.rotate_y, transform.rotate_z);
-
     }
 
 }
