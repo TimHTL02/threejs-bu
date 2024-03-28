@@ -16,6 +16,7 @@ export function useGame(props: {container: HTMLDivElement, ui: HTMLDivElement}){
 
     const world = useRef<CANNON.World | null>(null);
 
+    const [stopGame, setStopGame] = useState<boolean>(false);
     const [keyPressed, setKeyPressed] = useState<Record<string, boolean>>({});
 
     const [isReady, setIsReady] = useState<boolean>(false);
@@ -120,15 +121,27 @@ export function useGame(props: {container: HTMLDivElement, ui: HTMLDivElement}){
 
     }
 
+    useEffect(() =>{
+        if (stopGame){
+            setKeyPressed({});
+        }
+    }, [stopGame])
+
     // resize window
     useEffect(() =>{
         const onkeydown = (e: KeyboardEvent) => {
+            if (stopGame)
+                return;
+
             let dict = keyPressed;
 
             dict[e.key] = true;
             setKeyPressed({...dict});
         }
         const onkeyup = (e: KeyboardEvent) => {
+            if (stopGame)
+                return;
+
             let dict = keyPressed;
 
             delete dict[e.key];
@@ -154,7 +167,9 @@ export function useGame(props: {container: HTMLDivElement, ui: HTMLDivElement}){
         world: world.current!,
         keyPressed: keyPressed,
         isReady: isReady,
+        isStop: stopGame,
         exit: Exit,
-        init: setInit
+        init: setInit,
+        stop: setStopGame
     })
 }
