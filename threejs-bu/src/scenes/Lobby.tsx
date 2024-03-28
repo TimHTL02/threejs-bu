@@ -7,7 +7,9 @@ import { useAccountStore } from '../utils/zustand/useAccountStore';
 import { useTransitionStore } from '../utils/zustand/useTransitionStore';
 import { GameUILayer } from '../utils/GameUILayer';
 import { GameContainerLayer } from '../utils/GameContainerLayer';
-import { loader } from '../utils/game-cycle/initializeEntity';
+import { FaUser } from "react-icons/fa";
+import { supabase } from '..';
+import { RealtimeChannel } from '@supabase/supabase-js';
 
 export function Lobby(){
 
@@ -29,6 +31,8 @@ export function Lobby(){
     // add script here
     const counted = useRef<boolean>(false);
     useEffect(() =>{
+        if (!account.user_id)
+            return;
         if (counted.current)
             return;
         if (!isReady)
@@ -113,7 +117,9 @@ export function Lobby(){
     const [menuType, setMenuType] = useState<string>('all')
     const [roomMenuScope, roomMenuAnimate] = useAnimate();
 
-    const [roomPlayers, setRoomPlayers] = useState<number>(2);
+    const [roomName, setRoomName] = useState<string>('');
+    const [roomPlayers, setRoomPlayers] = useState<any>(2);
+    const [password, setPassword] = useState<string>('');
 
     async function OpenRoomMenuAnimation(){
         roomMenuScope.current.style.display = 'flex';
@@ -137,8 +143,30 @@ export function Lobby(){
             stop(false);
             CloseRoomMenuAnimation();
         }
-
     }, [openRoomMenu])
+
+    const rooms = useRef<RealtimeChannel | null>(null);
+    useEffect(() =>{
+        if (!isReady)
+            return;
+        if (!supabase)
+            return;
+        if (rooms.current)
+            return;
+
+        console.log('listen')
+        rooms.current = supabase.channel('testing')
+
+        rooms.current!
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'rooms'}, (payload) => {
+            console.log(payload.new)
+        })
+        .subscribe();
+
+        return () =>{
+            rooms.current!.unsubscribe();
+        }
+    }, [isReady])
 
     return (
         <div className=" relative w-full h-full bg-[#84a6c9] flex justify-center items-center">
@@ -204,33 +232,28 @@ export function Lobby(){
 
                     {
                         menuType === 'all' ?
-                        <div className=' w-full grid grid-cols-5 text-white font-semibold'>
+                        <div className=' w-full grid grid-cols-1 md:grid-cols-4 text-white font-semibold'>
                             <div className='bg-[#8c96b0] rounded-sm p-2 min-h-[150px] flex flex-col justify-start items-start cursor-pointer hover:bg-[#9da7bd] bg-opacity-50'>
                                 <div className='w-full inline-flex justify-between items-center'>
                                     <p>Room Name</p>
-                                    <p>1 / 4</p>
                                 </div>
                                 <hr className=' mt-1 w-full border-[#6b738a]' />
-                                <div className=' mt-2 w-full grid grid-cols-5 gap-2'>
-                                    <div className='p-2 rounded-full w-[40px] h-[40px] bg-[#646e86] border-white border inline-flex justify-center items-center'>
-                                        <p>s</p>
-                                    </div>
-                                    <div className='p-2 rounded-full w-[40px] h-[40px] bg-[#646e86] border-white border inline-flex justify-center items-center'>
-                                        <p>s</p>
-                                    </div>
-                                    <div className='p-2 rounded-full w-[40px] h-[40px] bg-[#646e86] border-white border inline-flex justify-center items-center'>
-                                        <p>s</p>
-                                    </div>
-                                    <div className='p-2 rounded-full w-[40px] h-[40px] bg-[#646e86] border-white border inline-flex justify-center items-center'>
-                                        <p>s</p>
-                                    </div>
+                                <div className=' mt-2 w-full flex justify-start items-center gap-2'>
+                                    <FaUser />
+                                    <FaUser />
+                                    <FaUser />
+                                    <FaUser />
                                 </div>
                             </div>
                         </div> :
-                        <div className=' w-full flex justify-center items-center'>
+                        <div className=' w-full flex justify-start items-center'>
                             <div className=' w-1/3 p-2 bg-[#8c96b0] gap-2 flex flex-col justify-start items-start font-semibold text-white'>
                                 <p>Room Name</p>
-                                <input className=' w-full p-1 rounded-sm text-black' />
+                                <input value={roomName} className=' w-full p-1 rounded-sm text-black'
+                                    onChange={(e) =>{
+                                        setRoomName(e.target.value);
+                                    }}
+                                />
                                 <p>Allowed Players</p>
                                 <input type='number' value={roomPlayers} className=' w-full p-1 rounded-sm text-black'
                                     onChange={(e) =>{
@@ -242,7 +265,21 @@ export function Lobby(){
                                         setRoomPlayers(val);
                                     }}
                                 />
-                                <div className=' mt-5 cursor-pointer hover:opacity-80 w-full inline-flex justify-center items-center p-2 bg-[#273457]'>
+                                <p>Password (Optional)</p>
+                                <input value={password} type='password' className=' w-full p-1 rounded-sm text-black'
+                                    onChange={(e) =>{
+                                        setPassword(e.target.value);
+                                    }}
+                                />
+                                <div className=' mt-5 cursor-pointer hover:opacity-80 w-full inline-flex justify-center items-center p-2 bg-[#273457]'
+                                    onClick={async() =>{
+                                        if (isNaN(roomPlayers))
+                                            return;
+                                        const { error } = await supabase
+                                        .from('rooms')
+                                        .insert({ room_name: roomName, allowed_players: roomPlayers, password: password, user_id: account.user_id })
+                                    }}
+                                >
                                     Create
                                 </div>
                             </div>
