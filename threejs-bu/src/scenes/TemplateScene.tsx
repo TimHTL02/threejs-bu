@@ -15,7 +15,7 @@ export function TemplateScene(){
     const container = useRef<HTMLDivElement | null>(null);
     const ui = useRef<HTMLDivElement | null>(null);
 
-    const {camera, scene, system, renderer, world, keyPressed, isReady, screenSize, exit, init} = useGame({container: container.current!, ui: ui.current!});
+    const {camera, scene, system, renderer, world, keyPressed, isReady, screenSize, isStop, exit, init, stop} = useGame({container: container.current!, ui: ui.current!});
 
     useEffect(() =>{
         if (container.current && ui.current)
@@ -45,11 +45,16 @@ export function TemplateScene(){
     }, [isReady])
 
     useEffect(() =>{
+        if (!renderer)
+            return;
         if (!isReady)
             return;
         
-        renderer.setAnimationLoop(() => updateGame(scene, world, renderer, system, keyPressed, camera, screenSize))
-    }, [isReady, scene, world, renderer, system, keyPressed, camera, screenSize])
+        if (isStop)
+            renderer.setAnimationLoop(null);
+        else
+            renderer.setAnimationLoop(() => updateGame(scene, world, renderer, system, keyPressed, camera, screenSize))
+    }, [isReady, scene, world, renderer, system, keyPressed, camera, screenSize, isStop])
 
     return (
         <div className=" relative w-full h-full bg-[#84a6c9] flex justify-center items-center">

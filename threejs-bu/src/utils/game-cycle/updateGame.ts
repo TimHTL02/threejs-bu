@@ -1,8 +1,9 @@
 import * as THREE from 'three';
 import * as CANNON from 'cannon-es'
 import { Entity, lerp, worldToScreenPosition } from '../gameInitFunctions';
+import { RealtimeChannel } from '@supabase/supabase-js';
 
-export function updateGame(scene: THREE.Scene, world: CANNON.World, renderer: THREE.WebGLRenderer, system: Record<string, Entity>, keyPressed: Record<string, boolean>, camera: THREE.PerspectiveCamera, screenSize: {width: number, height: number}){
+export function updateGame(scene: THREE.Scene, world: CANNON.World, renderer: THREE.WebGLRenderer, system: Record<string, Entity>, keyPressed: Record<string, boolean>, camera: THREE.PerspectiveCamera, screenSize: {width: number, height: number}, room?: RealtimeChannel){
     Object.values(system).forEach((entity) =>{
         Object.values(entity.components).forEach((component) =>{
             switch (component.id){
@@ -10,6 +11,21 @@ export function updateGame(scene: THREE.Scene, world: CANNON.World, renderer: TH
                     const dev_hitbox = entity.gameObject.dev_hitbox;
                     const hitbox = entity.gameObject.hitbox as CANNON.Body;
                     dev_hitbox.position.copy(hitbox.position);
+                    break;
+                }
+                case 'sync': {
+                    component.t++;
+                    if (component.t > 50){
+                        component.t = 0;
+
+                        room!.send({
+                            type: 'broadcast',
+                            event: entity.id,
+                            payload: {
+                                transform: entity.components['transform']
+                            },
+                          })
+                    }
                     break;
                 }
                 case 'transform': {
@@ -124,7 +140,6 @@ export function updateGame(scene: THREE.Scene, world: CANNON.World, renderer: TH
             }
         })
     })
-    // console.log(scene.children);
-    world.step(1 / 60);
+    world.step(1 / 30);
     renderer.render( scene, camera );
 }

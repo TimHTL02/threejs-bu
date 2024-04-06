@@ -2,10 +2,11 @@ import * as THREE from 'three';
 import * as CANNON from 'cannon-es'
 import { Entity, downloadFile } from "../gameInitFunctions";
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
+import { RealtimeChannel } from '@supabase/supabase-js';
 
 export const loader = new GLTFLoader();
 
-export async function initializeEntity(entity: Entity, scene: THREE.Scene, world: CANNON.World, ui: HTMLDivElement){
+export async function initializeEntity(entity: Entity, scene: THREE.Scene, world: CANNON.World, ui: HTMLDivElement, room?: RealtimeChannel){
     let transform = entity.components['transform'];
     let _scale = {x: 1, y: 1, z: 1};
     if (transform.scale){
@@ -16,6 +17,10 @@ export async function initializeEntity(entity: Entity, scene: THREE.Scene, world
     for(let i = 0; i < components.length; i++){
         let component = components[i];
         switch (component.id){
+            case 'sync': {
+                component.t = 0;
+                break;
+            }
             case 'model': {
                 let model_blob = await downloadFile(component.bucket, component.file);
                 if (!model_blob)

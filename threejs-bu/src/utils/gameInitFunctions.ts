@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import * as CANNON from 'cannon-es'
 import { initializeEntity } from './game-cycle/initializeEntity';
 import { supabase } from '..';
+import { RealtimeChannel } from '@supabase/supabase-js';
 
 export async function downloadFile(bucket: string, file: string){
 
@@ -36,8 +37,8 @@ export function createEntity(id: string){
 export function insertComponent(entity: Entity, component: Component){
     entity.components[component.id] = component;
 }
-export async function insertEntityToSystem(entity: Entity, system: Record<string, Entity>, scene: THREE.Scene, world: CANNON.World, ui: HTMLDivElement){
-    await initializeEntity(entity, scene, world, ui);
+export async function insertEntityToSystem(entity: Entity, system: Record<string, Entity>, scene: THREE.Scene, world: CANNON.World, ui: HTMLDivElement, room?: RealtimeChannel){
+    await initializeEntity(entity, scene, world, ui, room);
     system[entity.id] = entity;
 }
 export function lerp(start: number, end: number, t: number) {

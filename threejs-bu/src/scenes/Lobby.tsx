@@ -7,13 +7,15 @@ import { useAccountStore } from '../utils/zustand/useAccountStore';
 import { useTransitionStore } from '../utils/zustand/useTransitionStore';
 import { GameUILayer } from '../utils/GameUILayer';
 import { GameContainerLayer } from '../utils/GameContainerLayer';
-import { FaUser } from "react-icons/fa";
+import { FaLock } from "react-icons/fa";
 import { supabase } from '..';
 import { RealtimeChannel } from '@supabase/supabase-js';
+import { useGMStore } from '../utils/zustand/useGMStore';
 
 export function Lobby(){
 
-    const {account} = useAccountStore();
+    const {account, setHost} = useAccountStore();
+    const {setGMState} = useGMStore();
     const {setFading} = useTransitionStore();
 
     const container = useRef<HTMLDivElement | null>(null);
@@ -105,6 +107,8 @@ export function Lobby(){
     }, [isReady])
 
     useEffect(() =>{
+        if (!renderer)
+            return;
         if (!isReady)
             return;
         
@@ -146,6 +150,7 @@ export function Lobby(){
     }, [openRoomMenu])
 
     const rooms = useRef<RealtimeChannel | null>(null);
+    const [roomItems, setRoomItems] = useState<Record<string, {allowed_players: number, current_players: number, room_id: string, password: string, user_password: string, room_name: string, host_id: string}>>({});
     useEffect(() =>{
         if (!isReady)
             return;
@@ -154,17 +159,42 @@ export function Lobby(){
         if (rooms.current)
             return;
 
-        console.log('listen')
-        rooms.current = supabase.channel('testing')
+        const f = async() =>{
 
-        rooms.current!
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'rooms'}, (payload) => {
-            console.log(payload.new)
-        })
-        .subscribe();
+            rooms.current = supabase.channel('rooms', {
+                config: {
+                    presence: {
+                        key: account.user_id
+                    },
+                },
+            });
+
+            rooms.current
+            .on('presence', { event: 'sync' }, async() => {
+                const new_state = rooms.current!.presenceState();
+                let dict: typeof roomItems = {};
+                Object.entries(new_state).forEach(([client, data]) =>{
+                    let _data = data[0] as any;
+                    dict[client] = {
+                        allowed_players: _data.allowed_players,
+                        current_players: _data.current_players,
+                        room_id: _data.room_id,
+                        password: _data.password,
+                        user_password: '',
+                        room_name: _data.room_name,
+                        host_id: _data.host_id
+                    };
+                });
+                setRoomItems({...dict});
+                console.log(dict)
+            })
+            .subscribe();
+        };
+        f();
 
         return () =>{
-            rooms.current!.unsubscribe();
+            if (rooms.current)
+                rooms.current.unsubscribe();
         }
     }, [isReady])
 
@@ -232,19 +262,69 @@ export function Lobby(){
 
                     {
                         menuType === 'all' ?
-                        <div className=' w-full grid grid-cols-1 md:grid-cols-4 text-white font-semibold'>
-                            <div className='bg-[#8c96b0] rounded-sm p-2 min-h-[150px] flex flex-col justify-start items-start cursor-pointer hover:bg-[#9da7bd] bg-opacity-50'>
-                                <div className='w-full inline-flex justify-between items-center'>
-                                    <p>Room Name</p>
-                                </div>
-                                <hr className=' mt-1 w-full border-[#6b738a]' />
-                                <div className=' mt-2 w-full flex justify-start items-center gap-2'>
-                                    <FaUser />
-                                    <FaUser />
-                                    <FaUser />
-                                    <FaUser />
-                                </div>
-                            </div>
+                        <div className=' w-full grid grid-cols-1 md:grid-cols-4 text-white font-semibold gap-5'>
+                            {
+                                Object.entries(roomItems).map(([client, item], index) =>{
+                                    return (
+                                        <div key={`room-${index}`} className='bg-[#606e94] rounded-sm p-2 min-h-[150px] flex flex-col justify-start items-start'>
+                                            <div className='w-full inline-flex justify-between items-center'>
+                                                <p>{item.room_name}</p>
+                                                {
+                                                    item.password ?
+                                                    <FaLock />:
+                                                    <></>
+                                                }
+                                            </div>
+                                            <hr className=' mt-1 w-full border-[#6b738a]' />
+                                            <div className=' mt-2 w-full flex justify-start items-center gap-2'>
+                                                <p>{item.current_players}</p>
+                                                <p>/</p>
+                                                <p>{item.allowed_players}</p>
+                                            </div>
+                                            {
+                                                item.password ?
+                                                <input value={roomItems[client].user_password} type='password' className=' mt-2 rounded-md h-[25px] w-full p-1 bg-white text-black'
+                                                    onChange={(e) =>{
+                                                        setRoomItems({
+                                                            ... roomItems,
+                                                            [client]: {
+                                                                ...item,
+                                                                user_password: e.target.value
+                                                            }
+                                                        })
+                                                    }}
+                                                /> :
+                                                <></>
+                                            }
+                                            <div className=' mt-4 w-full inline-flex justify-end'>
+                                                <div className=' pl-2 pr-2 p-1 bg-[#3c4254] hover:bg-[#575e73] cursor-pointer select-none rounded-sm'
+                                                    onClick={() =>{
+                                                        if (item.current_players + 1 > item.allowed_players)
+                                                            return;
+                                                        if (item.password){
+                                                            if (item.password !== item.user_password){
+                                                                setRoomItems({
+                                                                    ... roomItems,
+                                                                    [client]: {
+                                                                        ...item,
+                                                                        user_password: ''
+                                                                    }
+                                                                })
+                                                                return;
+                                                            }
+                                                        }
+
+                                                        setHost(false);
+                                                        setFading(true, `/matching/${item.room_id}`);
+                                                    }}
+                                                >
+                                                    <p>Enter</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )
+                                })
+                            }
                         </div> :
                         <div className=' w-full flex justify-start items-center'>
                             <div className=' w-1/3 p-2 bg-[#8c96b0] gap-2 flex flex-col justify-start items-start font-semibold text-white'>
@@ -275,9 +355,14 @@ export function Lobby(){
                                     onClick={async() =>{
                                         if (isNaN(roomPlayers))
                                             return;
-                                        const { error } = await supabase
-                                        .from('rooms')
-                                        .insert({ room_name: roomName, allowed_players: roomPlayers, password: password, user_id: account.user_id })
+                                        if (!rooms.current)
+                                            return;
+
+                                        exit();
+
+                                        setGMState(roomPlayers, 0, account.user_id, password, roomName);
+                                        setHost(true);
+                                        setFading(true, `/matching/${account.user_id}`);
                                     }}
                                 >
                                     Create
