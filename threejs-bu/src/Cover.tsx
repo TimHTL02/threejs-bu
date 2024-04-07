@@ -18,11 +18,11 @@ const people = [
   },
   {
     id: 2,
-    name: "Robert Johnson",
+    name: "Tim HO",
     designation: "Product Manager",
     image:
-      "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8YXZhdGFyfGVufDB8fDB8fHww&auto=format&fit=crop&w=800&q=60",
-  },
+      "./images/Tim HO.png",
+      },
 ];
 
 export function Cover() {
