@@ -26,12 +26,19 @@ export function useGame(props: {container: HTMLDivElement, ui: HTMLDivElement}){
         camera.current?.remove();
         camera.current = null;
 
-        scene.current?.remove();
-        scene.current = null;
+        if (world.current)
+            world.current.bodies = [];
 
-        renderer.current?.setAnimationLoop(null);
-        renderer.current?.dispose();
-        renderer.current = null;
+        if (scene.current){
+            scene.current.remove();
+            scene.current = null;
+        }
+
+        if (renderer.current){
+            renderer.current.setAnimationLoop(null);
+            renderer.current.dispose();
+            renderer.current = null;
+        }
 
         props.ui.innerHTML = '';
 
