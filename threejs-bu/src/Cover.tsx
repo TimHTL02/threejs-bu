@@ -21,23 +21,23 @@ const people = [
     name: "Tim HO",
     designation: "Product Manager",
     image:
-      "./images/Tim HO.png",
-      },
+      "./images/Tim HO.jpg",
+  },
 ];
 
 export function Cover() {
 
-  const {setAccount, account} = useAccountStore();
-  const {setFading} = useTransitionStore();
+  const { setAccount, account } = useAccountStore();
+  const { setFading } = useTransitionStore();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session){
-        if (session.user.identities){
+      if (session) {
+        if (session.user.identities) {
           let data = session.user.identities[0].identity_data;
           let username = '';
           let email = session.user.email ? session.user.email : '';
-          if (data){
+          if (data) {
             username = data['full_name'];
           }
           setAccount({
@@ -58,12 +58,12 @@ export function Cover() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session){
-        if (session.user.identities){
+      if (session) {
+        if (session.user.identities) {
           let data = session.user.identities[0].identity_data;
           let username = '';
           let email = session.user.email ? session.user.email : '';
-          if (data){
+          if (data) {
             username = data['full_name'];
           }
           setAccount({
@@ -87,7 +87,7 @@ export function Cover() {
 
   return (
     <div className=" relative h-full w-full bg-[#8FB1D6] flex flex-col items-center justify-start p-1">
-      
+
       <p className=" mb-5 pl-5 text-white font-mono text-xl">made by</p>
 
       <div className="flex flex-row items-center justify-center mb-10 w-full">
@@ -120,50 +120,50 @@ export function Cover() {
         <div className=" w-full inline-flex justify-center items-center">
           {
             account.user_id === '' ?
-            <Auth
-              supabaseClient={supabase}
-              appearance={{ theme: ThemeSupa }}
-              providers={["google"]}
-              redirectTo={window.location.origin}
-            /> :
-            <div className=" flex flex-col justify-center items-center">
-              <p className=" mb-5 text-white">{`Welcome, ${account.username}!`}</p>
-              <motion.div
-                className=" mb-5 text-2xl font-semibold p-1 pl-2 pr-2 border-2 border-white rounded-md select-none text-white cursor-pointer"
-                initial={{ scale: 1, color: "#ffffff" }}
-                whileHover={{ scale: 1.5, color: "#000000" }}
-                transition={{
-                  type: "spring",
-                  bounce: 0.6,
-                }}
-                whileTap={{ scale: 0.8, rotateZ: 0 }}
-                onClick={() =>{
-                  setFading(true, '/lobby');
-                }}
-              >
-                <p>Play</p>
-              </motion.div>
-              <motion.div
-                className=" text-2xl font-semibold p-1 pl-2 pr-2 border-2 border-white rounded-md select-none text-white cursor-pointer"
-                initial={{ scale: 1, color: "#ffffff" }}
-                whileHover={{ scale: 1.5, color: "#000000" }}
-                transition={{
-                  type: "spring",
-                  bounce: 0.6,
-                }}
-                whileTap={{ scale: 0.8, rotateZ: 0 }}
-                onClick={() =>{
-                  supabase.auth.signOut();
-                  setAccount({
-                    user_id: '',
-                    username: '',
-                    email: ''
-                  })
-                }}
-              >
-                <p>Logout</p>
-              </motion.div>
-            </div>
+              <Auth
+                supabaseClient={supabase}
+                appearance={{ theme: ThemeSupa }}
+                providers={["google"]}
+                redirectTo={window.location.origin}
+              /> :
+              <div className=" flex flex-col justify-center items-center">
+                <p className=" mb-5 text-white">{`Welcome, ${account.username}!`}</p>
+                <motion.div
+                  className=" mb-5 text-2xl font-semibold p-1 pl-2 pr-2 border-2 border-white rounded-md select-none text-white cursor-pointer"
+                  initial={{ scale: 1, color: "#ffffff" }}
+                  whileHover={{ scale: 1.5, color: "#000000" }}
+                  transition={{
+                    type: "spring",
+                    bounce: 0.6,
+                  }}
+                  whileTap={{ scale: 0.8, rotateZ: 0 }}
+                  onClick={() => {
+                    setFading(true, '/lobby');
+                  }}
+                >
+                  <p>Play</p>
+                </motion.div>
+                <motion.div
+                  className=" text-2xl font-semibold p-1 pl-2 pr-2 border-2 border-white rounded-md select-none text-white cursor-pointer"
+                  initial={{ scale: 1, color: "#ffffff" }}
+                  whileHover={{ scale: 1.5, color: "#000000" }}
+                  transition={{
+                    type: "spring",
+                    bounce: 0.6,
+                  }}
+                  whileTap={{ scale: 0.8, rotateZ: 0 }}
+                  onClick={() => {
+                    supabase.auth.signOut();
+                    setAccount({
+                      user_id: '',
+                      username: '',
+                      email: ''
+                    })
+                  }}
+                >
+                  <p>Logout</p>
+                </motion.div>
+              </div>
           }
         </div>
       </div>
