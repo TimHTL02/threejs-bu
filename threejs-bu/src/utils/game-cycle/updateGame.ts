@@ -16,11 +16,14 @@ export function updateGame(scene: THREE.Scene, world: CANNON.World, renderer: TH
                 case 'transform': {
                     const hitbox = entity.gameObject.hitbox as CANNON.Body;
                     const model = entity.gameObject.model;
+                    component.x = hitbox.position.x;
+                    component.y = hitbox.position.y;
+                    component.z = hitbox.position.z;
 
                     let new_position = {
-                        x: lerp(model.position.x, hitbox.position.x, component.time_rotate),
-                        y: lerp(model.position.y, hitbox.position.y, component.time_rotate),
-                        z: lerp(model.position.z, hitbox.position.z, component.time_rotate)
+                        x: lerp(model.position.x, component.x, component.time_rotate),
+                        y: lerp(model.position.y, component.y, component.time_rotate),
+                        z: lerp(model.position.z, component.z, component.time_rotate)
                     };
                     model.position.set(new_position.x, new_position.y, new_position.z);
                     if (component.time_scale < 1){
@@ -43,14 +46,11 @@ export function updateGame(scene: THREE.Scene, world: CANNON.World, renderer: TH
                         if (component.time_rotate + 0.01 < 1)
                             component.time_rotate += 0.01;
                     }
-                    component.x = hitbox.position.x;
-                    component.y = hitbox.position.y;
-                    component.z = hitbox.position.z;
                     break;
                 }
                 case 'sync': {
                     component.t++;
-                    if (component.t > 5){
+                    if (component.t > 9){
                         const transform = entity.components['transform'];
                         const hitbox = entity.gameObject.hitbox as CANNON.Body;
                         component.t = 0;
@@ -66,11 +66,10 @@ export function updateGame(scene: THREE.Scene, world: CANNON.World, renderer: TH
                                         z: hitbox.quaternion.z,
                                         w: hitbox.quaternion.w
                                     },
-                                    time_rotate: transform.time_rotate,
                                     position: {
-                                        x: hitbox.position.x,
-                                        y: hitbox.position.y,
-                                        z: hitbox.position.z
+                                        x: transform.x,
+                                        y: transform.y,
+                                        z: transform.z
                                     },
                                     scale: transform.scale
                                 }
@@ -82,35 +81,51 @@ export function updateGame(scene: THREE.Scene, world: CANNON.World, renderer: TH
                 case 'controller': {
                     const transform = entity.components['transform'];
                     const physic = entity.components['physic'];
+                    const sync = entity.components['sync'];
 
-                    const prev = component.previous;
-
+                    let first_press = false;
+                    let prev = component.previous;
+                    if (!prev)
+                        prev = keyPressed;
+                    
                     if (keyPressed['ArrowLeft']){
                         physic.vel_x -= 0.1;
                         physic.vel_cam_x -= 0.005;
                         if (!prev['ArrowLeft']){
-                            transform.time_rotate = 0;
+                            first_press = true;
                         }
                     }
                     if (keyPressed['ArrowRight']){
                         physic.vel_x += 0.1;
                         physic.vel_cam_x += 0.005;
                         if (!prev['ArrowRight']){
-                            transform.time_rotate = 0;
+                            first_press = true;
                         }
                     }
                     if (keyPressed['ArrowUp']){
                         physic.vel_z -= 0.1;
                         physic.vel_cam_z -= 0.005;
                         if (!prev['ArrowUp']){
-                            transform.time_rotate = 0;
+                            first_press = true;
                         }
                     }
                     if (keyPressed['ArrowDown']){
                         physic.vel_z += 0.1;
                         physic.vel_cam_z += 0.005;
                         if (!prev['ArrowDown']){
-                            transform.time_rotate = 0;
+                            first_press = true;
+                        }
+                    }
+                    if (first_press){
+                        transform.time_rotate = 0;
+                        if (sync){
+                            room!.send({
+                                type: 'broadcast',
+                                event: 'tr',
+                                payload: {
+                                    id: entity.id
+                                }
+                            })
                         }
                     }
 
@@ -152,8 +167,8 @@ export function updateGame(scene: THREE.Scene, world: CANNON.World, renderer: TH
                     break;
                 }
                 case 'text': {
-                    const transform = entity.components['transform'];
-                    let pos = worldToScreenPosition(screenSize.width, screenSize.height, transform.x + component.x, transform.y + component.y, transform.z + component.z, camera);
+                    const model = entity.gameObject.model;
+                    let pos = worldToScreenPosition(screenSize.width, screenSize.height, model.position.x + component.x, model.position.y + component.y, model.position.z + component.z, camera);
                     const text = entity.gameObject.text as HTMLParagraphElement;
                     text.style.left = `${pos.x + component.screen_x}px`;
                     text.style.top = `${pos.y}px`;

@@ -14,7 +14,7 @@ import { useGMStore } from '../utils/zustand/useGMStore';
 
 export function Lobby(){
 
-    const {account, setHost} = useAccountStore();
+    const {account, setHost, skin, setSkin} = useAccountStore();
     const {setGMState} = useGMStore();
     const {setFading} = useTransitionStore();
 
@@ -69,8 +69,8 @@ export function Lobby(){
             insertComponent(player, {
                 id: 'text',
                 text: account.username,
-                y: 0.15,
-                size: 24,
+                y: 0.22,
+                size: 12,
                 color: '#ffffff'
             })
             insertComponent(player, {id: 'physic', static: true});
@@ -94,8 +94,8 @@ export function Lobby(){
             insertComponent(lobby, {
                 id: 'text',
                 text: 'Lobby',
-                y: 0.1,
-                size: 24,
+                y: 0.15,
+                size: 25,
                 color: '#ffffff',
                 onClick: () => setOpenRoomMenu(openRoomMenu => !openRoomMenu)
             })

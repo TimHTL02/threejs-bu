@@ -7,14 +7,16 @@ type Account = {
 }
 
 interface AccountState {
+    skin: string;
     is_host: boolean;
     account: Account;
     setAccount: (account: Account) => void;
     setHost: (host: boolean) => void;
+    setSkin: (skin: string) => void;
 }
 
 export const useAccountStore = create<AccountState>()((set) => ({
-    character_name: '',
+    skin: '',
     is_host: false,
     account: {user_id: '', username: '', email: ''},
     setAccount: (_account) =>{
@@ -26,5 +28,10 @@ export const useAccountStore = create<AccountState>()((set) => ({
         set(() => ({
             is_host: _host
         }))
+    },
+    setSkin(skin) {
+        set(() => ({
+            skin: skin
+        }))   
     }
 }))
