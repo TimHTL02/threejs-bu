@@ -12,6 +12,7 @@ import { supabase } from '..';
 import { useAccountStore } from '../utils/zustand/useAccountStore';
 import { useGMStore } from '../utils/zustand/useGMStore';
 import * as CANNON from 'cannon-es'
+import { generateUUID } from 'three/src/math/MathUtils';
 
 
 export function Matching(){
@@ -288,11 +289,24 @@ export function Matching(){
                       bounce: 0.6,
                     }}
                     whileTap={{ scale: 0.8, rotateZ: 0 }}
-                    onClick={() =>{
+                    onClick={async () =>{
                         exit();
                         if (rooms.current){
                             rooms.current.untrack();
                             rooms.current.unsubscribe();
+                        }
+                        if (room.current){
+                            let uuid = generateUUID();
+                            await room.current.send({
+                                type: 'broadcast',
+                                event: 'play',
+                                payload: {
+                                    uuid: uuid
+                                }
+                            });
+                            room.current.untrack();
+                            room.current.unsubscribe();
+                            setFading(true, `/Game/${uuid}`);
                         }
                     }}>
                         Start
