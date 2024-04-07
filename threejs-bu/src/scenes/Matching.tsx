@@ -149,9 +149,6 @@ export function Matching(){
         })
         .on('presence', { event: 'join' }, async ({ key, newPresences }) => {
             stop(true);
-            if (system[key]){
-                delete system[key];
-            }
             let player = createEntity(key);
             insertComponent(player, {id: 'transform', y: 0.5});
             insertComponent(player, {
