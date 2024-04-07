@@ -13,26 +13,16 @@ export function updateGame(scene: THREE.Scene, world: CANNON.World, renderer: TH
                     dev_hitbox.position.copy(hitbox.position);
                     break;
                 }
-                case 'sync': {
-                    component.t++;
-                    if (component.t > 50){
-                        component.t = 0;
-
-                        room!.send({
-                            type: 'broadcast',
-                            event: entity.id,
-                            payload: {
-                                transform: entity.components['transform']
-                            },
-                          })
-                    }
-                    break;
-                }
                 case 'transform': {
                     const hitbox = entity.gameObject.hitbox as CANNON.Body;
                     const model = entity.gameObject.model;
 
-                    model.position.copy(hitbox.position);
+                    let new_position = {
+                        x: lerp(model.position.x, hitbox.position.x, component.time_rotate),
+                        y: lerp(model.position.y, hitbox.position.y, component.time_rotate),
+                        z: lerp(model.position.z, hitbox.position.z, component.time_rotate)
+                    };
+                    model.position.set(new_position.x, new_position.y, new_position.z);
                     if (component.time_scale < 1){
                         let new_scale = {
                             x: lerp(model.scale.x, component.scale.x, component.time_scale),
@@ -56,6 +46,37 @@ export function updateGame(scene: THREE.Scene, world: CANNON.World, renderer: TH
                     component.x = hitbox.position.x;
                     component.y = hitbox.position.y;
                     component.z = hitbox.position.z;
+                    break;
+                }
+                case 'sync': {
+                    component.t++;
+                    if (component.t > 5){
+                        const transform = entity.components['transform'];
+                        const hitbox = entity.gameObject.hitbox as CANNON.Body;
+                        component.t = 0;
+                        room!.send({
+                            type: 'broadcast',
+                            event: 't',
+                            payload: {
+                                id: entity.id,
+                                transform: {
+                                    quaternion: {
+                                        x: hitbox.quaternion.x,
+                                        y: hitbox.quaternion.y,
+                                        z: hitbox.quaternion.z,
+                                        w: hitbox.quaternion.w
+                                    },
+                                    time_rotate: transform.time_rotate,
+                                    position: {
+                                        x: hitbox.position.x,
+                                        y: hitbox.position.y,
+                                        z: hitbox.position.z
+                                    },
+                                    scale: transform.scale
+                                }
+                            },
+                        })
+                    }
                     break;
                 }
                 case 'controller': {

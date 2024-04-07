@@ -11,6 +11,7 @@ import { RealtimeChannel } from '@supabase/supabase-js';
 import { supabase } from '..';
 import { useAccountStore } from '../utils/zustand/useAccountStore';
 import { useGMStore } from '../utils/zustand/useGMStore';
+import * as CANNON from 'cannon-es'
 
 
 export function Matching(){
@@ -101,7 +102,7 @@ export function Matching(){
 
         room.current = supabase.channel(`room_${id}`, {
             config: {
-                // broadcast: { self: true },
+                broadcast: { self: false },
                 presence: {
                     key: account.user_id
                 },
@@ -141,22 +142,39 @@ export function Matching(){
             }
 
             let player = createEntity(key);
-            insertComponent(player, newPresences[0].transform);
-            insertComponent(player, newPresences[0].model)
-            insertComponent(player, newPresences[0].hitbox);
-            insertComponent(player, newPresences[0].text)
+            insertComponent(player, {id: 'transform', y: 0.5});
+            insertComponent(player, {
+                id: 'model',
+                bucket: 'characters',
+                file: 'players/knight3.glb',
+                scale: {x: 0.001, y: 0.001, z: 0.001}
+            })
+            insertComponent(player, {
+                id: 'hitbox',
+                width: 0.1,
+                height: 0.1,
+                depth: 0.1
+            });
+            insertComponent(player, {
+                id: 'text',
+                text: newPresences[0].username,
+                y: 0.15,
+                size: 24,
+                color: '#ffffff'
+            });
             if (key === account.user_id){
                 insertComponent(player, {id: 'physic', static: true});
                 insertComponent(player, {id: 'controller'});
                 insertComponent(player, {id: 'camera'});
                 insertComponent(player, {id: 'sync'});
-                await insertEntityToSystem(player, system, scene, world, ui.current!);
             }
+            await insertEntityToSystem(player, system, scene, world, ui.current!);
         })
         .on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
             let player = players[key];
             if (player){
                 if (player.is_host){
+                    exit();
                     setHost(false);
                     clearGMState();
                     setFading(true, '/lobby');
@@ -167,15 +185,36 @@ export function Matching(){
             if (is_host){
                 _set_current_players((_current_players) => _current_players - 1);
             }
+
+            let dict = players;
+            delete dict[key];
+            setPlayers({...dict});
+
+            let entity = system[key];
+            if (!entity)
+                return;
+            scene.remove(entity.gameObject.model);
+            world.removeBody(entity.gameObject.hitbox);
+            if (entity.gameObject.text){
+                entity.gameObject.text.remove();
+            }
+            delete system[key];
         })
         .on(
             'broadcast',
-            { event: account.user_id },
+            { event: 't' },
             (data) => {
-                let entity = system[data.event];
+                let entity_id = data.payload.id;
+                let entity = system[entity_id];
                 if (!entity)
                     return;
-                entity.components.transform = data.payload.transform;
+                let transform = data.payload.transform;
+                let self_transform = entity.components['transform'];
+                let hitbox = system[entity_id].gameObject.hitbox as CANNON.Body;
+                hitbox.position.set(transform.position.x, transform.position.y, transform.position.z);
+                hitbox.quaternion.set(transform.quaternion.x, transform.quaternion.y, transform.quaternion.z, transform.quaternion.w);
+                self_transform.scale = transform.scale;
+                self_transform.time_rotate = transform.time_rotate;
             }
         )
         .subscribe( async(status) =>{
@@ -184,26 +223,8 @@ export function Matching(){
 
             // initial
             await room.current!.track({
-                transform: {id: 'transform', y: 0.5},
-                model: {
-                    id: 'model',
-                    bucket: 'characters',
-                    file: 'players/knight3.glb',
-                    scale: {x: 0.001, y: 0.001, z: 0.001}
-                },
-                hitbox: {
-                    id: 'hitbox',
-                    width: 0.1,
-                    height: 0.1,
-                    depth: 0.1
-                },
-                text: {
-                    id: 'text',
-                    text: account.username,
-                    y: 0.15,
-                    size: 24,
-                    color: '#ffffff'
-                }
+                is_host: is_host,
+                username: account.username
             });
         });
 
