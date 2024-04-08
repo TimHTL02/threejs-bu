@@ -48,14 +48,14 @@ export function Lobby() {
                 id: 'model',
                 bucket: 'scenes',
                 file: 'lobby/lobby.glb',
-                scale: { x: 0.15, y: 0.15, z: 0.15 }
+                scale: { x: 0.30, y: 0.30, z: 0.30 }
             });
-            insertComponent(ground, {
-                id: 'dev_hitbox',
-                width: 10,
-                height: 0.1,
-                depth: 10
-            });
+            // insertComponent(ground, {
+            //     id: 'dev_hitbox',
+            //     width: 10,
+            //     height: 0.1,
+            //     depth: 10
+            // });
             insertComponent(ground, {
                 id: 'hitbox',
                 width: 10,
